@@ -1,0 +1,189 @@
+{
+  "_about": "Every number the pipeline uses lives here, with where it came from. 'verified' = read in an official source (HCD/statute). 'secondary' = law-firm or city summary; confirm against the HCD fact sheet or statute before relying on it. 'assumed' = team assumption, label it in the demo.",
+  "checked": "2026-11-07",
+  "pathways": {
+    "SB684_SB1123": {
+      "name": "SB 684 / SB 1123 starter homes",
+      "plain": "Split into up to 10 small ownership lots, approved without a hearing",
+      "max_homes": 10,
+      "min_new_lot_sqft": 600,
+      "max_acres_multifamily_zone": 5.0,
+      "max_acres_singlefamily_zone_vacant": 1.5,
+      "ownership": true,
+      "status": "secondary",
+      "source": "https://coxcastle.com/publication-big-support-for-smaller-housing-three-bills-that-reduce-entitlement-friction-for-housing-projects",
+      "notes": "Lot must be substantially surrounded by urban uses. Single-family lots must be vacant. Avg unit size max 1,750 sq ft. Gov Code 65852.28 / 66499.41 per HCD combined fact sheet."
+    },
+    "SB9": {
+      "name": "SB 9 lot split + duplex",
+      "plain": "Split a single-family lot in two and build two homes on each",
+      "max_homes": 4,
+      "min_new_lot_sqft": 1200,
+      "ownership": true,
+      "min_split_share": 0.4,
+      "status": "secondary",
+      "source": "https://planning.lacounty.gov/wp-content/uploads/2022/10/sb9-summary.pdf",
+      "notes": "Single-family zones only. Each new lot at least 1,200 sq ft and at least 40% of the original. Very high fire hazard zones, special flood hazard areas and earthquake fault zones are allowed only with mitigation. Excluded: historic districts, housing occupied by tenants in the last 3 years, Ellis Act withdrawals in the last 15 years. Gov Code 65852.21, 66411.7."
+    },
+    "AB2011_100": {
+      "name": "AB 2011, 100% affordable",
+      "plain": "All-affordable housing on commercially zoned land, approved without rezoning",
+      "density_du_per_acre": 30,
+      "ownership": false,
+      "status": "secondary",
+      "source": "https://calhdf.org/ab-2011",
+      "notes": "Metropolitan jurisdictions: at least 30 units/acre, or local density if higher. Gov Code 65912.110-114. Site tests: not next to heavy industry, SB 35 environmental exclusions (fire, flood, etc.)."
+    },
+    "AB2011_MIXED": {
+      "name": "AB 2011, mixed-income on a commercial corridor",
+      "plain": "Market-rate plus affordable homes on a commercial street, for sale or rent, no hearing",
+      "density_lt_1_acre": 30,
+      "density_ge_1_acre_corridor_lt_100ft": 40,
+      "density_ge_1_acre_corridor_ge_100ft": 60,
+      "density_near_major_transit": 80,
+      "ownership": true,
+      "ownership_affordability": "For-sale projects: 30% of homes for moderate income or 15% for lower income, deed-restricted 45 years",
+      "status": "secondary",
+      "source": "https://gocodebook.com/library/us/ca/ca-gov-65912-ab2011-sb79-by-right-housing/title-7.-planning-and-land-use-65000-66499.58/division-1.-planning-and-zoning-65000-66345.4/chapter-4.1.-affordable-housing-and-high-road-jobs-act-of-2022-65912.100-65912.140/article-3.-mixed-income-housing-developments-along-commercial-corridors-65912.120-65912.124/65912.123",
+      "notes": "Gov Code 65912.123, metro densities as listed by Carlsbad, Pleasanton, SD County and CalHDF. One city checklist (Morgan Hill) lists 50/70 instead of 60/80: confirm current statute text on leginfo. Site must front a commercial corridor (non-freeway highway, 70-150 ft right-of-way); width unknown here, so the tool uses the 40/acre figure for 1+ acre sites."
+    },
+    "SB4": {
+      "name": "SB 4 faith & college land",
+      "plain": "Affordable housing by right on land owned by a congregation or nonprofit college",
+      "density_residential_zone_du_per_acre": 30,
+      "density_nonresidential_zone_du_per_acre": 40,
+      "ownership": false,
+      "status": "verified",
+      "source": "https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/aff-hsg-faith-higher-ed-sb-4.pdf",
+      "notes": "HCD fact sheet (April 2026): 30 units/acre in a metropolitan county (Orange County), 40 units/acre in zones that don't allow housing. Only applies when the owner is a religious institution or nonprofit college: needs owner data (not in free parcel layers)."
+    },
+    "HOUSING_ELEMENT": {
+      "name": "City's own Housing Element listing",
+      "plain": "The city already told the state this site can hold these homes",
+      "ownership": false,
+      "status": "verified",
+      "source": "https://maps.scag.ca.gov/scaggis/rest/services/LDX/HousingElementSite_poly_scag/MapServer",
+      "notes": "Capacity by income level as listed in the adopted 6th-cycle Housing Element site inventory (SCAG regional copy). A site the city listed is one it has to keep zoned for that capacity."
+    },
+    "BASE_ZONING": {
+      "name": "Current zoning",
+      "plain": "What the city's zoning already allows",
+      "status": "needs_data",
+      "notes": "Fill zone_density below from the Santa Ana zoning code (units per acre per zone)."
+    }
+  },
+  "zone_code_classes": {
+    "_note": "Santa Ana zone codes (SCAG ZN24_CITY) mapped to the tool's categories. Assumed from the code names; check against the Santa Ana zoning ordinance. Regex, matched in order.",
+    "status": "assumed",
+    "SANTA ANA": [
+      [
+        "^R-?1",
+        "single_family"
+      ],
+      [
+        "^R-?[2-4]",
+        "multi_family"
+      ],
+      [
+        "^CR",
+        "commercial"
+      ],
+      [
+        "^C-?\\d",
+        "commercial"
+      ],
+      [
+        "^C1-MD",
+        "commercial"
+      ],
+      [
+        "^P$",
+        "commercial"
+      ],
+      [
+        "^M-?\\d",
+        "industrial"
+      ],
+      [
+        "^O$",
+        "open_space"
+      ],
+      [
+        "^(SD|SP)",
+        "specific_plan"
+      ],
+      [
+        "^A-?1",
+        "other"
+      ],
+      [
+        "^CSM",
+        "other"
+      ]
+    ]
+  },
+  "zone_density": {
+    "_note": "Units per acre by zone code. Empty until the team adds them from the city zoning code. Example shape: {\"R2\": 15}"
+  },
+  "surplus_land": {
+    "cluster_distance_m": 35,
+    "after_process_affordable_share": 0.15,
+    "status": "secondary",
+    "source": "https://cc-publicdocs.santa-ana.org/WebLink/1/doc/139407/Page4.aspx",
+    "notes": "Housing sponsors get 60 days to respond to a notice, then 90 days of good-faith negotiation. If nobody responds or talks fail, the agency may sell to anyone, but residential projects of 10+ homes on that land must keep 15% affordable. Agencies are not required to sell below market value (Santa Ana staff report, Oct 2023)."
+  },
+  "people": {
+    "bedroom_mix": {
+      "2": 0.3,
+      "3": 0.5,
+      "4": 0.2
+    },
+    "persons_per_bedroom": 1.5,
+    "status": "assumed",
+    "notes": "Placeholder mix for ownership townhomes. Replace with a real project's mix later."
+  },
+  "pressure": {
+    "today": "2026-11-07",
+    "notes": "Lower-income progress = (very-low + low income homes built) / (very-low + low RHNA). Pressure compares that with the share of the 8-year cycle already elapsed."
+  },
+  "livability_weights": {
+    "transit": 0.25,
+    "environment": 0.25,
+    "opportunity": 0.25,
+    "hazard": 0.25
+  },
+  "land_use_candidates": {
+    "_note": "SCAG existing land use codes (2024) that make a parcel a candidate. Codes from SCAG's land use code legend.",
+    "source": "https://spm-dm-documentation-update.readthedocs.io/en/latest/scag_lu_codes/",
+    "min_acres": 0.2,
+    "codes": {
+      "1900": "Urban vacant",
+      "3000": "Vacant",
+      "3100": "Vacant, undifferentiated",
+      "3300": "Vacant with limited improvements",
+      "1247": "Public parking facility",
+      "1414": "Park-and-ride lot",
+      "1245": "Religious facility"
+    },
+    "sb4_proxy_codes": [
+      "1245"
+    ]
+  },
+  "aerial": {
+    "_note": "Aerial view settings. Photos: USDA NAIP via USGS (public domain). Usable area = parcel minus a setback strip minus existing buildings (OC Building Footprints) plus clearance.",
+    "cities": [
+      "Santa Ana"
+    ],
+    "setback_m": 1.5,
+    "building_clearance_m": 1.0,
+    "min_patch_sqm": 25,
+    "house_pathways": [
+      "SB9",
+      "SB684_SB1123"
+    ],
+    "homes_per_block": 4,
+    "status": "assumed",
+    "notes": "Setback and clearance are simple placeholders, not the city's development standards. Icons show how many homes the legal pathway allows spread over the open part of the lot; they are not a site plan.",
+    "max_blocks": 20
+  }
+}

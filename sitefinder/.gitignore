@@ -1,0 +1,12 @@
+# Downloaded data: big, and rebuilt by the fetch scripts
+data/*.geojson
+data/*.gpkg
+data/*.zip
+data/aerials/
+data/footprints/
+data/_manifest.json
+# Build output
+out/
+__pycache__/
+*.pyc
+.venv/

@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OC Site Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Leaflet 1.9.4 (BSD-2-Clause) */
+/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: url(images/layers.png);
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: url(images/layers-2x.png);
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: url(images/marker-icon.png);
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+
+</style>
+<style>
+:root{
+  /* Layout: left rail = controls + ranked sites; right = drawn county map, then the selected site's dossier. */
+  --paper:#f3f5f6; --panel:#ffffff; --ink:#17232b; --muted:#5b6a73; --line:#d6dde1;
+  --accent:#1f5f8b;            /* survey-ink blue */
+  --opp0:#e9e4d8; --opp1:#cfe0d6; --opp2:#93c2ad; --opp3:#4f9a83;   /* low → highest resource */
+  --good:#2e7d4f; --warn:#b7791f; --bad:#b23a3a; --none:#8a969d;
+  --land:#eef0ea; --road:#ffffff; --roadedge:#c9ccc4; --water:#9cc7e4;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#11181d; --panel:#172129; --ink:#e4ebef; --muted:#93a3ad; --line:#2a3842; --accent:#6fb0dc;
+  --opp0:#2a2b28; --opp1:#24392f; --opp2:#2f5b49; --opp3:#3f8a70;
+  --good:#5cc08a; --warn:#e0a84a; --bad:#e07373; --none:#76848c; --land:#1b2328; --road:#3b4850; --roadedge:#11181d; --water:#2c5d7c; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --paper:#11181d; --panel:#172129; --ink:#e4ebef; --muted:#93a3ad; --line:#2a3842; --accent:#6fb0dc;
+  --opp0:#2a2b28; --opp1:#24392f; --opp2:#2f5b49; --opp3:#3f8a70;
+  --good:#5cc08a; --warn:#e0a84a; --bad:#e07373; --none:#76848c; --land:#1b2328; --road:#3b4850; --roadedge:#11181d; --water:#2c5d7c; color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.5 var(--body)}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:.01em;margin:0;text-wrap:balance}
+h1{font-size:28px;line-height:1.1} h2{font-size:20px} h3{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.wrap{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:16px;padding:16px;max-width:1500px;margin:0 auto}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 24px;align-items:end;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:10px}
+header p{margin:2px 0 0;color:var(--muted);max-width:70ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px}
+.stack{display:flex;flex-direction:column;gap:12px}
+label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+select,input[type=range]{width:100%;accent-color:var(--accent)}
+select{font:inherit;padding:6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.list{display:flex;flex-direction:column;gap:6px;max-height:640px;overflow:auto;padding-right:4px}
+.site{all:unset;cursor:pointer;display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-left:4px solid var(--none);border-radius:4px;background:var(--panel)}
+.site:hover{border-color:var(--accent)} .site:focus-visible{outline:2px solid var(--accent)}
+.site[aria-current="true"]{background:color-mix(in srgb,var(--accent) 10%,var(--panel));border-color:var(--accent)}
+.site.likely{border-left-color:var(--good)} .site.maybe{border-left-color:var(--warn)}
+.rank{font-family:var(--display);font-size:20px;color:var(--muted);text-align:center}
+.site b{display:block;font-weight:500;line-height:1.25;overflow-wrap:anywhere}
+.site small{color:var(--muted)}
+.score{font-family:var(--mono);font-size:18px;text-align:right}
+.score small{display:block;font-size:10px}
+.right{display:flex;flex-direction:column;gap:16px;min-width:0}
+.mapbox{position:relative}
+.dot{cursor:pointer;stroke:var(--panel);stroke-width:1.5}
+.dot.sel{stroke:var(--ink);stroke-width:3}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:8px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:4px;border:1px solid var(--line)}
+.dossier{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1100px){.dossier{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.dossier{grid-template-columns:1fr}}
+.tile{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--panel)}
+.tile .big{font-family:var(--display);font-size:34px;font-weight:600;line-height:1}
+.tile .sub{color:var(--muted);font-size:12px}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em;border:1px solid currentColor;white-space:nowrap}
+.p-likely{color:var(--good)} .p-maybe{color:var(--warn)} .p-no{color:var(--bad)} .p-unknown,.p-pending{color:var(--none)}
+.p-verified{color:var(--good)} .p-secondary{color:var(--warn)} .p-assumed,.p-needs_data{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+td.num{font-family:var(--mono);text-align:right}
+.tablewrap{overflow-x:auto}
+.bar{height:8px;border-radius:4px;background:var(--line);position:relative;overflow:visible}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:4px;background:var(--accent)}
+.bar .tick{position:absolute;top:-4px;width:2px;height:16px;background:var(--ink)}
+.parts{display:grid;grid-template-columns:110px 1fr 40px;gap:6px 10px;align-items:center;font-size:13px}
+.parts span:last-child{font-family:var(--mono);text-align:right}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.citybars{display:grid;grid-template-columns:120px 1fr 34px;gap:4px 8px;align-items:center;font-size:12px;max-height:340px;overflow:auto}
+.citybars .me{font-weight:600;color:var(--accent)}
+a{color:var(--accent)}
+.note{font-size:12px;color:var(--muted)}
+.apns{font-family:var(--mono);font-size:12px;overflow-wrap:anywhere}
+
+
+/* Pan/zoom map */
+#lmap{height:560px;border-radius:6px;border:1px solid var(--line);background:var(--land);z-index:0}
+@media (max-width:900px){#lmap{height:420px}}
+.maptools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:10px}
+.maptools input[type=search]{flex:1 1 220px;font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink)}
+.maptools label{display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--ink);cursor:pointer}
+.leaflet-container{font-family:var(--body)}
+.leaflet-tooltip{font-size:12px}
+.leaflet-control-attribution{font-size:10px}
+/* Aerial view */
+.aerial{display:grid;grid-template-columns:minmax(0,520px) minmax(220px,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.aerial{grid-template-columns:1fr}}
+.photo{position:relative;width:100%;aspect-ratio:1;border-radius:6px;overflow:hidden;background:#3a4147;border:1px solid var(--line)}
+.photo img,.photo svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.photo .noimg{position:absolute;inset:0;display:grid;place-items:end center;color:#cfd6da;font-size:12px;text-align:center;padding:0 24px 40px}
+.photo .nophoto{background:repeating-linear-gradient(0deg,transparent 0 31px,#ffffff10 31px 32px),repeating-linear-gradient(90deg,transparent 0 31px,#ffffff10 31px 32px),#3a4a45}
+.lot-line{fill:none;stroke:#ffe14d;stroke-width:3.5;stroke-linejoin:round}
+.bldg{fill:url(#hatch);stroke:#ff8a7a;stroke-width:1.2}
+.usable{fill:#5fd39a;fill-opacity:.32;stroke:#5fd39a;stroke-width:1.5;stroke-dasharray:5 4}
+.astats{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:13px}
+.astats b{font-family:var(--mono);font-weight:500;text-align:right}
+.akey{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.akey svg{vertical-align:-4px;margin-right:4px}
+.btn{font:inherit;font-size:13px;padding:6px 12px;border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:4px;cursor:pointer}
+.btn:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.scale{position:absolute;left:12px;bottom:12px;color:#fff;font:11px var(--mono);text-shadow:0 1px 2px #000}
+.scale i{display:block;height:4px;border:2px solid #fff;border-top:0;margin-top:2px}
+.attrib{position:absolute;right:8px;bottom:6px;color:#fff;font-size:10px;opacity:.85;text-shadow:0 1px 2px #000}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .3s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>OC Site Finder</h1>
+      <p>Public surplus land and Housing Element sites across Orange County, checked against state housing laws, livability and how far each city is behind its housing target.</p>
+    </div>
+    <div class="note mono" id="stamp"></div>
+  </header>
+
+  <aside class="stack">
+    <div class="panel stack">
+      <h3>Filter and rank</h3>
+      <div><label for="city">City</label><select id="city"></select></div>
+      <div><label for="only">Show</label>
+        <select id="only"><option value="viable">Sites with a legal pathway</option><option value="all">All surplus sites</option></select></div>
+      <div><label for="size">Site size</label>
+        <select id="size"><option value="all">Any size</option><option value="small" selected>Small: 4–30 homes (nonprofit scale)</option><option value="mid">Mid: 31–150 homes</option><option value="large">Large: 150+ homes</option></select></div>
+      <div><label for="src">Land source</label>
+        <select id="src"><option value="all">All candidate land</option><option value="surplus_land">Public surplus land only</option><option value="housing_element">Housing Element sites only</option><option value="land_use">Vacant lots, parking &amp; faith sites only</option></select></div>
+      <div><label for="w-homes"><span>Weight: homes</span><span id="v-homes" class="mono"></span></label><input type="range" id="w-homes" min="0" max="10" value="4"></div>
+      <div><label for="w-liv"><span>Weight: livability</span><span id="v-liv" class="mono"></span></label><input type="range" id="w-liv" min="0" max="10" value="3"></div>
+      <div><label for="w-pres"><span>Weight: city pressure</span><span id="v-pres" class="mono"></span></label><input type="range" id="w-pres" min="0" max="10" value="3"></div>
+      <p class="note" style="margin:0">Score = weighted mix of homes (log scale), livability (0–100) and the city's shortfall on lower-income homes (0–100).</p>
+    </div>
+    <div class="list" id="list" aria-label="Ranked sites"></div>
+  </aside>
+
+  <main class="right">
+    <section class="panel">
+      <div class="maptools">
+        <input type="search" id="q" placeholder="Search address or APN" aria-label="Search sites by address or APN">
+        <label><input type="checkbox" id="L-opp" checked> Opportunity shading</label>
+        <label><input type="checkbox" id="L-transit"> Transit areas</label>
+        <label><input type="checkbox" id="L-flood"> Flood zones</label>
+        <label><input type="checkbox" id="L-photo" checked> Aerial photos when zoomed in</label>
+      </div>
+      <p class="note" style="margin:0 0 6px">Click a site to see its details · double-click to zoom to the lot · scroll or use +/− to zoom.</p>
+      <div id="lmap" role="application" aria-label="Map of candidate sites. Drag to pan, scroll or use the buttons to zoom."></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--opp0)"></i>Low resource</span>
+        <span><i class="sw" style="background:var(--opp1)"></i>Moderate</span>
+        <span><i class="sw" style="background:var(--opp2)"></i>High</span>
+        <span><i class="sw" style="background:var(--opp3)"></i>Highest resource</span>
+        <span><i class="sw" style="background:var(--good);border-radius:50%"></i>Site, likely pathway</span>
+        <span><i class="sw" style="background:var(--warn);border-radius:50%"></i>Maybe</span>
+        <span><i class="sw" style="background:var(--none);border-radius:50%"></i>No pathway found</span>
+        <span><i class="sw" style="background:transparent;border:2px dashed #2b6cb0"></i>Transit area</span>
+        <span><i class="sw" style="background:#4a90d9;opacity:.5"></i>Flood zone</span>
+      </div>
+    </section>
+
+    <section class="stack" id="detail"></section>
+
+    <section class="two">
+      <div class="panel stack">
+        <h2>Which cities are under pressure</h2>
+        <p class="note" style="margin:0">Share of the city's lower-income housing target built so far. The black tick marks how much of the 8-year cycle has passed (Oct 2021 – Oct 2029). Left of the tick means behind.</p>
+        <div class="citybars" id="cities"></div>
+      </div>
+      <div class="panel stack">
+        <h2>What the data can and can't say yet</h2>
+        <div id="caveats" class="note" style="font-size:13px"></div>
+        <h3>Sources</h3>
+        <div id="sources" class="note"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const D = /*__DATA__*/null;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = n => n == null ? "—" : Number(n).toLocaleString();
+const OPP = {"Low Resource":"var(--opp0)","Moderate Resource":"var(--opp1)","High Resource":"var(--opp2)","Highest Resource":"var(--opp3)"};
+const statusOf = s => { const b = s.pathways.find(p => p.id === s.best_pathway); return b ? b.status : "none"; };
+const pathName = s => (s.pathways.find(p => p.id === s.best_pathway) || {}).name || "No pathway found";
+let selected = null, lastAnimated = null, fitNext = true;
+
+function score(s){
+  const wh = +$("#w-homes").value, wl = +$("#w-liv").value, wp = +$("#w-pres").value;
+  const h = Math.min(100, Math.log1p(s.homes) / Math.log1p(100) * 100);
+  const l = s.livability ?? 50, p = s.pressure?.score ?? 50;
+  const tot = wh + wl + wp || 1;
+  return Math.round((wh*h + wl*l + wp*p) / tot);
+}
+
+function visible(){
+  const c = $("#city").value, only = $("#only").value, sz = $("#size").value, src = $("#src").value;
+  const fits = h => sz === "all" || (sz === "small" ? h >= 4 && h <= 30 : sz === "mid" ? h > 30 && h <= 150 : h > 150);
+  const q = ($("#q")?.value || "").trim().toLowerCase().replace(/-/g, "");
+  return D.sites.filter(s => (!q || (s.name + " " + s.apns.join(" ")).toLowerCase().replace(/-/g, "").includes(q))
+    && (c === "all" || s.city === c) && (only === "all" || s.homes > 0)
+    && (only === "all" || fits(s.homes)) && (src === "all" || s.source === src))
+    .map(s => ({s, sc: score(s)})).sort((a,b) => b.sc - a.sc || b.s.homes - a.s.homes);
+}
+
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let M = null, LY = {}, markers = new Map(), flyNext = false;
+
+function initMap(){
+  M = L.map("lmap", {zoomControl:true, preferCanvas:true, minZoom:9, maxZoom:20, zoomSnap:0.5, attributionControl:true});
+  M.attributionControl.setPrefix("").addAttribution("Roads: US Census TIGER · Tracts: TCAC/HCD · Photos: USDA NAIP");
+  M.fitBounds(D.map.bounds);
+  const oppCol = {"Low Resource":css("--opp0"),"Moderate Resource":css("--opp1"),"High Resource":css("--opp2"),"Highest Resource":css("--opp3")};
+  M.createPane("roads"); M.getPane("roads").style.zIndex = 420; M.getPane("roads").style.pointerEvents = "none";
+  M.createPane("photos"); M.getPane("photos").style.zIndex = 430;
+  M.createPane("sites"); M.getPane("sites").style.zIndex = 450;
+  LY.opp = L.geoJSON(D.map.tracts, {style: f => ({fillColor: oppCol[f.properties.cat] || css("--opp0"), fillOpacity:.75, color: css("--panel"), weight:.5})});
+  LY.land = L.geoJSON(D.map.tracts, {style: () => ({fillColor: css("--land"), fillOpacity:1, color: css("--roadedge"), weight:.3})});
+  if (D.map.roads) {
+    const r = new L.Canvas({pane:"roads"});
+    LY.roadsEdge = L.geoJSON(D.map.roads, {pane:"roads", renderer:r, style: f => ({color: css("--roadedge"), weight: f.properties.major ? 6 : 3, opacity:1})});
+    LY.roads = L.geoJSON(D.map.roads, {pane:"roads", renderer:r, style: f => ({color: f.properties.major ? "#fde7a8" : css("--road"), weight: f.properties.major ? 4 : 1.8, opacity:1})});
+  }
+  LY.transit = D.map.transit && L.geoJSON(D.map.transit, {style:{color:"#2b6cb0", weight:1.5, dashArray:"5 4", fillColor:"#2b6cb0", fillOpacity:.08}});
+  LY.flood = D.map.flood && L.geoJSON(D.map.flood, {style:{color:"#2f74c0", weight:.5, fillColor:"#4a90d9", fillOpacity:.35}});
+  LY.photos = L.layerGroup().addTo(M);
+  LY.sites = L.layerGroup().addTo(M);
+  LY.sel = L.layerGroup().addTo(M);
+  const sync = () => {
+    $("#L-opp").checked ? (LY.land.remove(), LY.opp.addTo(M)) : (LY.opp.remove(), LY.land.addTo(M));
+    LY.roadsEdge && (LY.roadsEdge.addTo(M), LY.roads.addTo(M));
+    LY.transit && ($("#L-transit").checked ? LY.transit.addTo(M) : LY.transit.remove());
+    LY.flood && ($("#L-flood").checked ? LY.flood.addTo(M) : LY.flood.remove());
+    drawPhotos();
+  };
+  ["#L-opp","#L-transit","#L-flood","#L-photo"].forEach(id => $(id).onchange = sync);
+  if (!D.map.transit) $("#L-transit").parentElement.style.display = "none";
+  if (!D.map.flood) $("#L-flood").parentElement.style.display = "none";
+  M.on("zoomend moveend", drawPhotos);
+  sync();
+}
+
+function zoomToSite(id){
+  const s = D.sites.find(x => x.id === id); if (!s || !M) return;
+  let b = null;
+  if (s.outline) b = L.geoJSON(s.outline).getBounds();
+  else if (s.aerial && s.aerial.bounds) b = L.latLngBounds(s.aerial.bounds);
+  if (b && b.isValid()) M.flyToBounds(b.pad(0.6), {maxZoom: 19, duration: .9});
+  else M.flyTo([s.lat, s.lon], 17, {duration: .9});
+  $("#lmap").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest"});
+}
+
+function drawPhotos(){
+  const z = M.getZoom();
+  LY.sites.eachLayer(m => { m._r0 = m._r0 || m.getRadius(); m.setRadius(z >= 16 ? 5 : m._r0); m.setStyle({fillOpacity: z >= 16 ? .7 : .95}); });
+  LY.photos.clearLayers();
+  if (!$("#L-photo").checked || M.getZoom() < 16) return;
+  const view = M.getBounds();
+  D.sites.filter(s => s.aerial && s.aerial.bounds && view.intersects(s.aerial.bounds)).slice(0, 14).forEach(s => {
+    L.imageOverlay(s.aerial.img, s.aerial.bounds, {pane:"photos", opacity:1, interactive:false, alt:""}).addTo(LY.photos);
+    if (s.outline) L.geoJSON(s.outline, {pane:"photos", interactive:false, style:{color:"#ffe14d", weight:2.5, fill:false}}).addTo(LY.photos);
+  });
+}
+
+function drawMap(rows){
+  if (!M) initMap();
+  const col = {likely:css("--good"), maybe:css("--warn"), none:css("--none")};
+  LY.sites.clearLayers(); markers.clear();
+  rows.forEach(({s}) => {
+    const m = L.circleMarker([s.lat, s.lon], {pane:"sites", radius: Math.max(5, Math.min(11, 4 + Math.sqrt(s.homes))),
+      color: css("--panel"), weight: 1.5, fillColor: col[statusOf(s)], fillOpacity: .95})
+      .bindTooltip(`<b>${esc(s.name)}</b><br>${esc(s.city)} · ${s.homes ? s.homes + " homes" : "no pathway"}<br><span style="opacity:.7">Double-click to zoom to the lot</span>`, {direction:"top"})
+      .on("click", () => { flyNext = false; pick(s.id); })
+      .on("dblclick", e => { L.DomEvent.stop(e); if (selected !== s.id) { flyNext = false; pick(s.id); } zoomToSite(s.id); });
+    m.addTo(LY.sites); markers.set(s.id, m);
+  });
+  LY.sel.clearLayers();
+  const s = D.sites.find(x => x.id === selected);
+  if (s) {
+    L.circleMarker([s.lat, s.lon], {pane:"sites", radius:14, color:css("--ink"), weight:3, fill:false, interactive:false}).addTo(LY.sel);
+    if (s.outline) L.geoJSON(s.outline, {pane:"sites", interactive:false, style:{color:"#ffe14d", weight:3, fill:false}}).addTo(LY.sel);
+    if (flyNext) M.flyTo([s.lat, s.lon], Math.max(M.getZoom(), s.aerial ? 17 : 15), {duration:.8});
+  }
+  if (fitNext && rows.length) { M.fitBounds(L.latLngBounds(rows.map(r => [r.s.lat, r.s.lon])).pad(0.15), {maxZoom:15}); fitNext = false; }
+  flyNext = false;
+}
+
+function drawList(rows){
+  $("#list").innerHTML = rows.length ? rows.map((r,i) => `
+    <button class="site ${statusOf(r.s)}" data-id="${r.s.id}" aria-current="${r.s.id===selected}">
+      <span class="rank">${i+1}</span>
+      <span><b>${esc(r.s.name)}</b><small>${esc(r.s.city)} · ${r.s.acres ? r.s.acres.toFixed(2)+" ac" : "size unknown"} · ${r.s.homes ? r.s.homes+" homes" : "no pathway"}</small></span>
+      <span class="score">${r.sc}<small>score</small></span>
+    </button>`).join("") : `<p class="note">No sites match. Try "All surplus sites" or another city.</p>`;
+  $("#list").querySelectorAll(".site").forEach(b => b.onclick = () => { flyNext = true; pick(b.dataset.id); });
+}
+
+function bar(pct, tick){
+  return `<div class="bar"><i style="width:${Math.min(100, pct*100)}%"></i>${tick!=null?`<span class="tick" style="left:calc(${tick*100}% - 1px)"></span>`:""}</div>`;
+}
+
+function drawDetail(){
+  const s = D.sites.find(x => x.id === selected);
+  if (!s) { $("#detail").innerHTML = ""; return; }
+  const pr = s.pressure, lp = s.livability_parts || {};
+  const label = {transit:"Transit access", environment:"Environmental health", opportunity:"Opportunity & schools", hazard:"Hazard safety"};
+  const parts = Object.keys(label).map(k => `<span>${label[k]}</span>${lp[k]==null ? `<span><span class="pill p-pending">pending data</span></span><span>—</span>` : `${bar(lp[k]/100)}<span>${lp[k]}</span>`}`).join("");
+  const nLiv = Object.values(lp).filter(v => v != null).length;
+  const people = D.rules.people;
+  const paths = s.pathways.map(p => `<tr>
+      <td><b>${esc(p.name)}</b><div class="note">${esc(p.plain)}${p.ownership ? " · ownership homes" : ""}</div></td>
+      <td><span class="pill p-${p.status}">${p.status}</span></td>
+      <td class="num">${p.homes ? p.homes : "—"}</td>
+      <td>${esc(p.why)}</td>
+      <td><span class="pill p-${p.rule_status}">${p.rule_status.replace("_"," ")}</span>${p.source ? `<div><a href="${esc(p.source)}">rule source</a></div>` : ""}</td></tr>`).join("");
+  $("#detail").innerHTML = `
+  <div class="panel stack">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline">
+      <div><h2 style="font-size:26px">${esc(s.name)}</h2>
+        <div class="note">${esc(s.city)} · ${s.agency ? "owned by " + esc(s.agency) : s.source === "land_use" ? "parcel land use lead" : "Housing Element site"} · tract <span class="mono">${esc(s.tract || "—")}</span></div></div>
+      <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn" type="button" id="zoomlot">Zoom to lot on map</button>
+        <span class="pill p-${statusOf(s)==="none"?"no":statusOf(s)}">${esc(pathName(s))}</span></span>
+    </div>
+    <div class="dossier">
+      <div class="tile"><div class="sub">Lot size</div><div class="big">${s.acres ? s.acres.toFixed(2) : "—"}<span style="font-size:16px"> ac</span></div>
+        <div class="sub mono">${s.lot_sqft ? fmt(s.lot_sqft)+" sq ft" : "size not in notice"} · ${s.apns.length} parcel${s.apns.length>1?"s":""}</div></div>
+      <div class="tile"><div class="sub">Homes that fit (best legal pathway)</div><div class="big">${s.homes || 0}</div>
+        <div class="sub">${esc(pathName(s))}</div></div>
+      <div class="tile"><div class="sub">People housed</div><div class="big">${s.people ? "≈"+fmt(s.people) : "0"}</div>
+        <div class="sub">Assumed ${s.avg_bedrooms} bedrooms avg × ${people.persons_per_bedroom} people/bedroom</div></div>
+      <div class="tile"><div class="sub">Livability index</div><div class="big">${s.livability ?? "—"}<span style="font-size:16px">/100</span></div>
+        <div class="sub">${nLiv} of 4 parts have data</div></div>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Legal pathway</th><th>Fit</th><th style="text-align:right">Homes</th><th>Why</th><th>Rule</th></tr></thead>
+      <tbody>${paths}</tbody></table></div>
+    ${s.zoning_note ? `<p class="note" style="margin:0">${esc(s.zoning_note)}</p>` : ""}
+    <div class="two">
+      <div class="stack">
+        <h3>Livability</h3>
+        <div class="parts">${parts}</div>
+        <p class="note" style="margin:0">Opportunity category: <b>${esc(s.opportunity_category || "—")}</b>${s.env_burden_top5 ? ` · <span style="color:var(--bad)">tract is in the top 5% for environmental burden in the region</span>` : ""}.
+        ${s.livability_pending.length ? "Still to load: " + esc(s.livability_pending.join(", ")) + "." : ""}</p>
+      </div>
+      <div class="stack">
+        <h3>City pressure: ${esc(s.city)}</h3>
+        ${pr ? `${bar(pr.lower_income_pct, pr.cycle_elapsed_pct)}
+          <p style="margin:0"><b class="mono">${fmt(pr.lower_income_built)}</b> of <b class="mono">${fmt(pr.lower_income_target)}</b> lower-income homes built (${Math.round(pr.lower_income_pct*100)}%) with ${Math.round(pr.cycle_elapsed_pct*100)}% of the cycle gone.
+          ${pr.behind_pace_homes ? `<b>${fmt(pr.behind_pace_homes)} homes behind pace.</b>` : "On or ahead of pace."} Pressure score <b class="mono">${pr.score}</b>/100.</p>`
+          : `<p class="note" style="margin:0">No RHNA row for this place. Land outside a city counts toward the county's target.</p>`}
+        <h3>Land status</h3>
+        ${s.source === "land_use" ? `<p style="margin:0">${esc(s.existing_use)} today, per SCAG's 2024 parcel land use. Owner is not in the free data; check the county Assessor.${s.owner_type === "religious_proxy" ? " If a congregation owns it, SB 4 lets it build affordable homes on its parking or spare land without rezoning." : ""}</p>` : s.source === "housing_element" ? `<p style="margin:0">Listed in ${esc(s.city)}'s Housing Element site inventory${s.he_capacity ? `: <b class="mono">${s.he_capacity.lower}</b> lower-income, <b class="mono">${s.he_capacity.moderate}</b> moderate, <b class="mono">${s.he_capacity.above_moderate}</b> above-moderate homes` : ""}. Owner is not in the free data; check the county Assessor before reaching out.</p>` : `<p style="margin:0">Public surplus land: housing builders get first chance to negotiate under the Surplus Land Act. Notice sent <span class="mono">${esc(s.notice_date || "—")}</span>. Builders have 60 days to respond, then 90 days to negotiate; this notice is past that window, so confirm it is still available. If the agency sells it to someone else, any project of 10+ homes there must keep ${Math.round(D.rules.surplus_land.after_process_affordable_share*100)}% affordable.
+        ${s.notice_link ? ` <a href="${esc(s.notice_link)}">Read the notice</a>.` : ""}</p>`}
+        <p class="note" style="margin:0">${s.existing_use ? "Current use: " + esc(s.existing_use) + " · " : ""}Zoning: ${esc(s.zone_code ? s.zone_code + " (parcel zoning layer)" : (s.zoning_text || "not in data yet"))}</p>
+        <div class="apns">APN ${s.apns.map(esc).join(", ")}</div>
+      </div>
+    </div>
+  </div>` + aerialHTML(s);
+  const rb = $("#replay"); if (rb) rb.onclick = animateAerial;
+  const zb = $("#zoomlot"); if (zb) zb.onclick = () => zoomToSite(s.id);
+  if (s.id !== lastAnimated) { lastAnimated = s.id; requestAnimationFrame(animateAerial); }
+}
+
+function drawCities(){
+  const city = (D.sites.find(x => x.id === selected) || {}).city?.toUpperCase();
+  const rows = Object.entries(D.cities).filter(([,v]) => v.lower_income_pct != null)
+    .sort((a,b) => a[1].lower_income_pct - b[1].lower_income_pct);
+  $("#cities").innerHTML = rows.map(([c,v]) => `<span class="${c===city?"me":""}">${esc(c.replace(/\b\w+/g, w => w[0]+w.slice(1).toLowerCase()))}</span>${bar(v.lower_income_pct, v.cycle_elapsed_pct)}<span class="mono">${Math.round(v.lower_income_pct*100)}%</span>`).join("");
+}
+
+
+const HOUSE = sz => `<path d="M${-sz*.42},${-sz*.05} L0,${-sz*.62} L${sz*.42},${-sz*.05} Z" fill="#1f8a4c" stroke="#0d3d21" stroke-width="1.2" stroke-linejoin="round"/><rect x="${-sz*.32}" y="${-sz*.08}" width="${sz*.64}" height="${sz*.5}" fill="#2fae64" stroke="#0d3d21" stroke-width="1.2"/>`;
+const BLOCK = sz => `<path d="M${-sz*.5},${-sz*.55} L0,${-sz*.85} L${sz*.5},${-sz*.55} Z" fill="#a8261c" stroke="#4a0f0a" stroke-width="1.2" stroke-linejoin="round"/><rect x="${-sz*.42}" y="${-sz*.58}" width="${sz*.84}" height="${sz*1.0}" fill="#d63b2f" stroke="#4a0f0a" stroke-width="1.2"/><rect x="${-sz*.22}" y="${-sz*.35}" width="${sz*.14}" height="${sz*.14}" fill="#ffe9c7"/><rect x="${sz*.08}" y="${-sz*.35}" width="${sz*.14}" height="${sz*.14}" fill="#ffe9c7"/>`;
+
+function aerialHTML(s){
+  const a = s.aerial;
+  if (!a) return `<div class="panel stack"><h3>Aerial view</h3><p class="note" style="margin:0">${s.city === "Santa Ana" && s.homes > 0 ? "Photo not downloaded yet: run fetch_aerials.py, then rebuild." : "Aerial view covers Santa Ana sites with a legal pathway so far."}</p></div>`;
+  const sz = a.icon_px, n = a.icons.length;
+  const bar = Math.max(10, Math.round(a.metres_across / 5 / 10) * 10), barPx = bar / a.metres_across * 100;
+  const icon = a.icon === "house" ? HOUSE : BLOCK;
+  return `<div class="panel stack">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <h2>What fits on the lot</h2><button class="btn" id="replay" type="button">Replay</button></div>
+    <div class="aerial">
+      <div class="photo">
+        ${a.img ? `<img src="${esc(a.img)}" alt="Aerial photo of ${esc(s.name)}" onerror="this.remove()">` : `<div class="noimg nophoto">Aerial photo still downloading. Lot outline and layout are real.</div>`}
+        <svg viewBox="0 0 ${a.px} ${a.px}" aria-hidden="true">
+          <defs>
+            <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#ff6b5a" fill-opacity=".35"/><line x1="0" y1="0" x2="0" y2="8" stroke="#ff6b5a" stroke-width="3"/></pattern>
+            <mask id="lotmask"><rect width="${a.px}" height="${a.px}" fill="#fff"/><path d="${a.parcel}" fill="#000"/></mask>
+          </defs>
+          <rect class="a-dim" width="${a.px}" height="${a.px}" fill="#0b1216" fill-opacity=".5" mask="url(#lotmask)"/>
+          ${a.buildings ? `<path class="bldg a-bldg" d="${a.buildings}"/>` : ""}
+          ${a.usable ? `<path class="usable a-use" d="${a.usable}"/>` : ""}
+          <path class="lot-line a-line" d="${a.parcel}"/>
+          <g transform="translate(18,${a.px - 22})" font-family="IBM Plex Mono,monospace" font-size="13" fill="#fff" stroke="none">
+            <rect x="0" y="0" width="${barPx / 100 * a.px}" height="5" fill="#fff" stroke="#000" stroke-width=".8"/>
+            <text x="0" y="-6" style="paint-order:stroke" stroke="#000" stroke-width="3">${bar} m</text></g>
+          ${a.icons.map(p => `<g class="a-icon" transform="translate(${p.x},${p.y + sz*0.2})"><g>${icon(sz)}</g></g>`).join("")}
+        </svg>
+        <div class="attrib">${a.img ? "Imagery: USDA NAIP · " : ""}Footprints: OC Public Works</div>
+      </div>
+      <div class="stack">
+        <div class="astats">
+          <span>Lot area</span><b>${fmt(a.parcel_sqft)} sq ft</b>
+          <span>Existing buildings</span><b>${a.stale_footprint_sqft ? "none (cleared)" : a.footprints_loaded ? fmt(a.building_sqft) + " sq ft" : "not loaded"}</b>
+          <span>Open, usable area</span><b>${fmt(a.usable_sqft)} sq ft (${a.parcel_sqft ? Math.round(a.usable_sqft / a.parcel_sqft * 100) : 0}%)</b>
+          <span>Homes (${esc(pathName(s))})</span><b>${s.homes}</b>
+          <span>Space per home</span><b>${s.homes ? fmt(Math.round(a.usable_sqft / s.homes)) + " sq ft" : "—"}</b>
+        </div>
+        <div class="akey">
+          <span><svg width="20" height="20" viewBox="-10 -14 20 20">${icon(16)}</svg>${a.icon === "house" ? "1 home (ownership lot)" : a.homes_per_icon + " homes per building"}</span>
+          <span><svg width="18" height="12"><rect width="18" height="12" fill="#5fd39a" fill-opacity=".45" stroke="#5fd39a"/></svg>open land</span>
+          <span><svg width="18" height="12"><rect width="18" height="12" fill="#ff6b5a" fill-opacity=".45" stroke="#ff8a7a"/></svg>existing buildings</span>
+          <span><svg width="18" height="12"><rect x="1" y="1" width="16" height="10" fill="none" stroke="#e0b400" stroke-width="2"/></svg>lot line</span>
+        </div>
+        ${a.stale_footprint_sqft ? `<p class="note" style="margin:0;color:var(--warn)">The county footprint layer still shows ${fmt(a.stale_footprint_sqft)} sq ft of buildings here, but the land-use record says vacant. Check the photo: if it shows cleared ground, the footprints are out of date and the whole lot is open.</p>` : ""}
+        ${a.fits ? "" : `<p class="note" style="margin:0;color:var(--warn)">Only ${n} of ${a.icon === "house" ? s.homes : Math.ceil(s.homes / a.homes_per_icon)} icons fit on the open ground at this spacing: the plan would need to build taller or clear existing buildings.</p>`}
+        <p class="note" style="margin:0">Usable area = lot minus a ${D.rules.aerial.setback_m} m edge strip minus existing buildings. Icons spread the legal home count over open ground to show scale; they are not a site plan.</p>
+      </div>
+    </div></div>`;
+}
+
+function animateAerial(){
+  const root = $("#detail .photo"); if (!root) return;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const line = root.querySelector(".a-line"), parts = [".a-dim",".a-bldg",".a-use"].map(q => root.querySelector(q));
+  const icons = [...root.querySelectorAll(".a-icon > g")];
+  root.getAnimations({subtree:true}).forEach(x => x.cancel());
+  if (reduce || !line) return;
+  const L = line.getTotalLength();
+  line.style.strokeDasharray = L;
+  line.animate([{strokeDashoffset:L},{strokeDashoffset:0}], {duration:1300, easing:"cubic-bezier(.6,0,.3,1)", fill:"both"});
+  const [dim,bldg,use] = parts;
+  dim && dim.animate([{opacity:0},{opacity:1}], {duration:700, fill:"both"});
+  bldg && bldg.animate([{opacity:0},{opacity:1}], {duration:400, delay:1200, fill:"both"});
+  use && use.animate([{opacity:0},{opacity:1}], {duration:500, delay:1600, fill:"both"});
+  const gap = Math.min(70, 1600 / Math.max(icons.length,1));
+  icons.forEach((g,i) => g.animate(
+    [{transform:"translateY(-14px) scale(0)",opacity:0},{transform:"translateY(2px) scale(1.15)",opacity:1,offset:.7},{transform:"translateY(0) scale(1)",opacity:1}],
+    {duration:420, delay:2100 + i*gap, easing:"cubic-bezier(.2,.8,.3,1.2)", fill:"both"}));
+}
+
+function pick(id){ selected = id; render(); }
+
+function render(){
+  ["homes","liv","pres"].forEach(k => $("#v-"+k).textContent = $("#w-"+k).value);
+  const rows = visible();
+  if (!rows.some(r => r.s.id === selected) && rows.length) selected = (rows.find(r => r.s.aerial && r.s.aerial.img) || rows[0]).s.id;
+  drawList(rows); drawMap(rows); drawDetail(); drawCities();
+}
+
+function init(){
+  const cities = [...new Set(D.sites.map(s => s.city))].sort();
+  $("#city").innerHTML = `<option value="all">All Orange County</option>` + cities.map(c => `<option${c==="Santa Ana"?" selected":""}>${esc(c)}</option>`).join("");
+  ["#w-homes","#w-liv","#w-pres"].forEach(s => $(s).oninput = render);
+  ["#city","#only","#size","#src"].forEach(s => $(s).oninput = () => { fitNext = true; render(); });
+  $("#q").oninput = () => { fitNext = true; render(); };
+  $("#q").onkeydown = e => { if (e.key === "Enter") { const r = visible()[0]; if (r) { flyNext = true; pick(r.s.id); } } };
+  $("#stamp").innerHTML = `${D.sites.length} candidate sites · ${Object.keys(D.cities).length} jurisdictions<br>rules checked ${esc(D.rules.checked)}`;
+  $("#caveats").innerHTML = `<ul style="margin:0;padding-left:18px">
+    <li>Housing Element sites come from SCAG's regional copy, which has no rows for Santa Ana, Costa Mesa, Huntington Beach, Tustin or Orange. Those cities' inventories have to come from the cities themselves.</li>
+    <li>Hazard, transit and environment layers were fetched for the Santa Ana area first; sites elsewhere show those parts as pending until the fetch runs county-wide.</li>
+    <li>Homes per pathway come from <span class="mono">rules.json</span>. Each rule is tagged verified (read in an HCD source) or secondary (city checklists and law-firm summaries that agree). Confirm secondary rules on leginfo before relying on them.</li>
+    <li>Parcels from one notice are grouped when their points are within ${D.rules.surplus_land.cluster_distance_m} m of each other. Confirm on a parcel map that they actually touch.</li>
+    <li>Zoning is read from the notice text, not the city's parcel layer, so treat a pathway as a lead.</li>
+    <li>People housed uses an assumed bedroom mix (${Object.entries(D.rules.people.bedroom_mix).map(([b,f]) => Math.round(f*100)+"% "+b+"-bed").join(", ")}).</li>
+    <li>City is the notice's postal city. Unincorporated land can carry a city's mailing name.</li>
+    <li>Price is not shown yet. For public land it's negotiated with the agency; Santa Ana assessed values load from the fetch script.</li></ul>`;
+  $("#sources").innerHTML = D.sources.map(s => s.url.startsWith("http") ? `<div><a href="${esc(s.url)}">${esc(s.name)}</a></div>` : `<div>${esc(s.name)}</div>`).join("");
+  render();
+}
+init();
+</script>
+</body>
+</html>
