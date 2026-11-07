@@ -992,17 +992,17 @@ function drawPhotos(){
 
 // Zoomed in on a lot without clicking it: select the lot under the map centre
 function autoPickLot(){
-  if (M.getZoom() < 17) return;
-  const c = M.getCenter();
+  if (M.getZoom() < 16) return;
+  const c = M.getCenter(), view = M.getBounds();
   const vis = new Set(visible().map(r => r.s.id));
   let best = null, bd = Infinity;
   D.sites.forEach(s => {
     if (!s.aerial || !s.aerial.bounds || !vis.has(s.id)) return;
-    if (!L.latLngBounds(s.aerial.bounds).contains(c)) return;
+    if (!view.contains([s.lat, s.lon])) return;          // any lot in view, nearest to the centre wins
     const d = c.distanceTo([s.lat, s.lon]);
     if (d < bd) { bd = d; best = s; }
   });
-  if (best && best.id !== selected && bd < 120) { flyNext = false; pick(best.id); }
+  if (best && best.id !== selected) { flyNext = false; pick(best.id); }
 }
 
 let markerKey = "";
@@ -1150,12 +1150,13 @@ function lotCardHTML(s){
     <div class="astats">
       <span>Homes that fit</span><b>${s.homes}</b>
       <span>Lot area</span><b>${fmt(a.parcel_sqft)} sq ft</b>
-      <span>Open ground</span><b>${fmt(a.usable_sqft)} sq ft (${a.parcel_sqft ? Math.round(a.usable_sqft / a.parcel_sqft * 100) : 0}%)</b>
-      <span>Existing buildings</span><b>${a.stale_footprint_sqft ? "cleared" : a.footprints_loaded ? fmt(a.building_sqft) + " sq ft" : "—"}</b>
+      ${a.footprints_loaded ? `<span>Open ground</span><b>${fmt(a.usable_sqft)} sq ft (${a.parcel_sqft ? Math.round(a.usable_sqft / a.parcel_sqft * 100) : 0}%)</b>` : ""}
+      <span>Existing buildings</span><b>${a.stale_footprint_sqft ? "cleared" : a.footprints_loaded ? fmt(a.building_sqft) + " sq ft" : "not mapped yet"}</b>
     </div>
     <div class="akey"><span><svg width="20" height="20" viewBox="-10 -14 20 20">${icon(16)}</svg>${a.icon === "house" ? "1 home" : a.homes_per_icon + " homes per building"}</span>
       <span><svg width="14" height="10"><rect width="14" height="10" fill="#5fd39a" fill-opacity=".5" stroke="#5fd39a"/></svg>open</span>
-      <span><svg width="14" height="10"><rect width="14" height="10" fill="#ff6b5a" fill-opacity=".5" stroke="#ff8a7a"/></svg>built</span></div>
+      ${a.footprints_loaded ? `<span><svg width="14" height="10"><rect width="14" height="10" fill="#ff6b5a" fill-opacity=".5" stroke="#ff8a7a"/></svg>built</span>` : ""}</div>
+    ${a.footprints_loaded ? "" : `<p class="note">Building outlines and aerial photos are loaded for Santa Ana so far; here the whole parcel is shown.</p>`}
     ${a.stale_footprint_sqft ? `<p class="warn">County records still show old buildings here; the photo shows the lot cleared.</p>` : ""}
     ${a.fits ? "" : `<p class="warn">Not all homes fit on open ground: this would need taller buildings.</p>`}
     <div class="row"><button class="btn" type="button" data-act="replay">Replay</button><button class="btn" type="button" data-act="brief">Site brief</button></div>`;
@@ -1175,7 +1176,7 @@ function setLot(s){
 function updateLot(){
   if (!M) return;
   const s = D.sites.find(x => x.id === lotFor);
-  const close = s && M.getZoom() >= 16.5 && M.getBounds().contains(L.latLngBounds(s.aerial.bounds).getCenter());
+  const close = s && M.getZoom() >= 16 && M.getBounds().contains([s.lat, s.lon]);
   const mk = s && markers.get(s.id);
   if (close) {
     if (!M.hasLayer(lotOverlay)) lotOverlay.addTo(M);

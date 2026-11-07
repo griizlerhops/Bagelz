@@ -27,7 +27,8 @@ def photo_bbox(geom_merc):
     return [cx - side / 2, cy - side / 2, cx + side / 2, cy + side / 2]
 
 
-def write_requests(sites, out_dir):
+def write_requests(sites, out_dir, photo_cities=None):
+    """Every site with an outline gets a layout frame; only photo_cities get photo requests."""
     reqs = []
     for s in sites:
         g = s.get("_geom")
@@ -35,8 +36,9 @@ def write_requests(sites, out_dir):
             continue
         gm = gpd.GeoSeries([g], crs=4326).to_crs(MERC).iloc[0]
         s["_bbox_merc"] = photo_bbox(gm)
-        reqs.append({"id": safe_id(s["id"]), "bbox3857": [round(v, 2) for v in s["_bbox_merc"]],
-                     "name": s["name"], "city": s["city"]})
+        if photo_cities is None or s["city"] in photo_cities:
+            reqs.append({"id": safe_id(s["id"]), "bbox3857": [round(v, 2) for v in s["_bbox_merc"]],
+                         "name": s["name"], "city": s["city"]})
     json.dump(reqs, open(os.path.join(out_dir, "aerial_requests.json"), "w"), indent=1)
     return len(reqs)
 

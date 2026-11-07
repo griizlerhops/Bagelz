@@ -596,9 +596,9 @@ def main():
 
     # Aerial view: photo requests for the configured cities, then usable area + icons
     acfg = RULES["aerial"]
-    aerial_sites = [s for s in sites if s["city"] in acfg["cities"] and s["homes"] > 0 and s.get("_geom") is not None]
+    aerial_sites = [s for s in sites if s["homes"] > 0 and s.get("_geom") is not None]
     os.makedirs(a.out, exist_ok=True)
-    n_req = aerial.write_requests(aerial_sites, a.out)
+    n_req = aerial.write_requests(aerial_sites, a.out, set(acfg["cities"]))
     n_done = aerial.build_aerials(aerial_sites, a.data, a.out, RULES)
     print(f"aerial: {n_req} photo requests written to {a.out}/aerial_requests.json, {n_done} photos laid out")
 
@@ -632,7 +632,7 @@ def main():
     }
     to_ll = lambda x, y: gpd.GeoSeries.from_xy([x], [y], crs=3857).to_crs(4326).iloc[0]
     for s in sites:
-        if s.get("_geom") is not None and s["city"] in acfg["cities"]:
+        if s.get("_geom") is not None and s["homes"] > 0:
             g = shapely.set_precision(s["_geom"].simplify(0.000005), 1e-6)
             s["outline"] = json.loads(gpd.GeoSeries([g]).to_json())["features"][0]["geometry"]
         if s.get("aerial") and s.get("_bbox_merc"):
