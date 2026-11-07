@@ -1,0 +1,50 @@
+{
+  "about": "The five land pathways named in the challenge brief, as a starting list for matching laws to parcels. Each entry is a one-line summary from the brief plus an official source. The summary is NOT the rule: eligibility, lot-size limits and exclusions are in the source. Read it before you code a filter, and show the date you checked.",
+  "checked": "2026-11-06 (sources listed as VERIFIED in DATA-SOURCES.md)",
+  "pathways": [
+    {
+      "id": "SB9",
+      "name": "SB 9",
+      "what_it_opens": "Lot splits and duplexes on single-family lots",
+      "sources": [
+        "https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/lot-splits-and-duplexes-sb-9.pdf",
+        "https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/sb-9-fact-sheet.pdf"
+      ]
+    },
+    {
+      "id": "SB684_SB1123",
+      "name": "SB 684 / SB 1123",
+      "what_it_opens": "Small-lot subdivisions of up to 10 homes without a hearing",
+      "sources": [
+        "https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/housing-law-fact-sheets.pdf",
+        "https://calmatters.digitaldemocracy.org/bills/ca_202320240sb684",
+        "https://calmatters.digitaldemocracy.org/bills/ca_202320240sb1123"
+      ],
+      "note": "Lot-size limits differ by source and by bill. Cite the statute you used."
+    },
+    {
+      "id": "AB2011",
+      "name": "AB 2011",
+      "what_it_opens": "Housing on commercial corridors",
+      "sources": [
+        "https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/housing-law-fact-sheets.pdf",
+        "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=65912.101"
+      ]
+    },
+    {
+      "id": "SB4",
+      "name": "SB 4",
+      "what_it_opens": "Housing on faith and nonprofit-college land",
+      "sources": [
+        "https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/aff-hsg-faith-higher-ed-sb-4.pdf"
+      ]
+    },
+    {
+      "id": "CONDO",
+      "name": "Condo conversion",
+      "what_it_opens": "Converting existing apartments to ownership condos",
+      "sources": [],
+      "note": "No single statute summary listed here. Local condo-conversion rules and state subdivision map rules apply; find and cite them."
+    }
+  ]
+}

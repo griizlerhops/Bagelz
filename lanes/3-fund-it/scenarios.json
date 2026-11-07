@@ -1,0 +1,26 @@
+{
+  "about": "Made-up situations for designing and testing a Lane 3 tool. No scenario describes a real person, project, program or donor. Pair them with data/synthetic-example-deal.json.",
+  "scenarios": [
+    {
+      "id": "M01",
+      "title": "A finance lead closing a gap",
+      "who": "The finance lead at a small housing nonprofit, working on one home like the worked example.",
+      "in_their_words": "I'm $95k short per home. Which sources could I still stack, and when would the money arrive?",
+      "what_good_looks_like": "Candidate sources with eligibility, deadlines and timing shown, funds marked unconfirmed until checked, and the gap recalculated."
+    },
+    {
+      "id": "M02",
+      "title": "The rate moves",
+      "who": "The same finance lead, a month later.",
+      "in_their_words": "Rates went up. How much bigger is the gap now?",
+      "what_good_looks_like": "The family's affordable price recomputed from a dated income-limits table and a published rate, with the gap change shown in dollars."
+    },
+    {
+      "id": "M03",
+      "title": "A donor who wants to know what a gift does",
+      "who": "A local donor considering a gift.",
+      "in_their_words": "If I give $25,000, what does that actually pay for?",
+      "what_good_looks_like": "The gift mapped to lines of the one-home bill, with every number labeled as an assumption or sourced."
+    }
+  ]
+}

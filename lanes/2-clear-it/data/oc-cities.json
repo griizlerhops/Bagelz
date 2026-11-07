@@ -1,0 +1,243 @@
+{
+  "about": "The 34 incorporated cities in Orange County. Each has its own forms, fees and checklists. Unincorporated areas are handled by the County of Orange. The permit_page, adu_checklist and fee_schedule fields are empty on purpose: finding and checking them is part of the work. Record the URL and the date you checked.",
+  "cities": [
+    {
+      "name": "Aliso Viejo",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Anaheim",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Brea",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Buena Park",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Costa Mesa",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Cypress",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Dana Point",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Fountain Valley",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Fullerton",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Garden Grove",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Huntington Beach",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Irvine",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "La Habra",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "La Palma",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Laguna Beach",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Laguna Hills",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Laguna Niguel",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Laguna Woods",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Lake Forest",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Los Alamitos",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Mission Viejo",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Newport Beach",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Orange",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Placentia",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Rancho Santa Margarita",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "San Clemente",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "San Juan Capistrano",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Santa Ana",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Seal Beach",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Stanton",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Tustin",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Villa Park",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Westminster",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    },
+    {
+      "name": "Yorba Linda",
+      "permit_page": null,
+      "adu_checklist": null,
+      "fee_schedule": null,
+      "checked": null
+    }
+  ]
+}

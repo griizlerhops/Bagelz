@@ -1,0 +1,26 @@
+{
+  "about": "Made-up situations for designing and testing a Lane 1 tool. No scenario describes a real person, property or organization. Parcel facts are deliberately missing: your tool should find them from public data, or say 'unknown'.",
+  "scenarios": [
+    {
+      "id": "F01",
+      "title": "A congregation with a parking lot",
+      "who": "The facilities chair of a small congregation in an Orange County city. The lot is half-empty except on weekends.",
+      "in_their_words": "We keep hearing churches can build housing now. Can we? Where would we even start?",
+      "what_good_looks_like": "Which pathway might apply (likely SB 4), what to check about the parcel, and which facts are unknown until someone confirms them."
+    },
+    {
+      "id": "F02",
+      "title": "An acquisitions lead with no GIS team",
+      "who": "A one-person acquisitions team at a small housing nonprofit.",
+      "in_their_words": "Give me ten sites in one city I should call about this month, and why each one.",
+      "what_good_looks_like": "A short, ranked list with the law that opens each site, the data behind it, and what still has to be checked (ownership, hazards, utilities)."
+    },
+    {
+      "id": "F03",
+      "title": "A legal site that may not be usable",
+      "who": "City housing staff reviewing a list of candidate sites.",
+      "in_their_words": "Half the sites on these lists turn out to be on a slope or in a fire zone. Can you flag those first?",
+      "what_good_looks_like": "Hazard and constraint checks (fire, flood, slope, contamination) shown next to each site, with sources and dates."
+    }
+  ]
+}

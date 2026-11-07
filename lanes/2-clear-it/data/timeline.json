@@ -1,0 +1,35 @@
+{
+  "about": "The baseline timeline from the challenge brief: about four years from finding land to handing over keys. These are rounded estimates for a typical project, not measurements. Label them as assumptions if you use them.",
+  "label": "ASSUMPTION",
+  "phases": [
+    {
+      "phase": "Rezoning",
+      "typical": "about 1 year"
+    },
+    {
+      "phase": "Entitlements",
+      "typical": "about 1 year"
+    },
+    {
+      "phase": "Plans",
+      "typical": "6 to 12 months"
+    },
+    {
+      "phase": "Build",
+      "typical": "about 1 year"
+    }
+  ],
+  "fast_path": [
+    "Start on land that is already zoned correctly",
+    "Get a ministerial approval: meet the written rules and the city must say yes, with no hearing",
+    "Use state-approved plans"
+  ],
+  "other_delays": [
+    "Plan-check corrections and resubmittals",
+    "Utility and fire sign-offs, water and sewer capacity",
+    "Funding rounds that open once a year",
+    "Condo map paperwork",
+    "Relocating existing tenants"
+  ],
+  "why_it_matters": "Every month of waiting costs money: loan interest, taxes, insurance and management. In the worked example, time costs are $85k of a $535k home."
+}

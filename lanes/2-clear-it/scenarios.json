@@ -1,0 +1,26 @@
+{
+  "about": "Made-up situations for designing and testing a Lane 2 tool. No scenario describes a real person, project or city decision.",
+  "scenarios": [
+    {
+      "id": "C01",
+      "title": "A homeowner adding an ADU",
+      "who": "A first-time applicant in one Orange County city.",
+      "in_their_words": "Which forms do I need, in what order, and how long will each step take?",
+      "what_good_looks_like": "The city's own checklist and fees, linked and dated, with the state rule shown wherever the city form disagrees with it."
+    },
+    {
+      "id": "C02",
+      "title": "A nonprofit project manager comparing cities",
+      "who": "Manages a small project that could go in one of two cities.",
+      "in_their_words": "Which city gets me to a ministerial approval faster?",
+      "what_good_looks_like": "A side-by-side of the steps, documents and published timelines, with gaps marked 'unknown' rather than guessed."
+    },
+    {
+      "id": "C03",
+      "title": "A permit tech who wants to get it right",
+      "who": "City counter staff.",
+      "in_their_words": "I want to tell applicants the right answer the first time, even when our form is out of date.",
+      "what_good_looks_like": "Answers that cite the state law and any HCD letter, and flag when the city form may be stale."
+    }
+  ]
+}

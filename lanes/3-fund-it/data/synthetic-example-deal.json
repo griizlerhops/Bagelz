@@ -1,0 +1,70 @@
+{
+  "SYNTHETIC": "This is a made-up deal for testing, matching the worked example in docs/background.md and the challenge brief. It is not a real project, building, city, program or buyer. Every number is a rounded ASSUMPTION based on a typical project. Do not cite it as a benchmark.",
+  "name": "SYNTHETIC one-home bill (worked example)",
+  "currency": "USD",
+  "unit": "per home",
+  "cost_to_create": {
+    "land_and_building_purchase": {
+      "value": 360000,
+      "label": "ASSUMPTION",
+      "note": "Lane 1 · Find it. Invented."
+    },
+    "time_costs_while_waiting": {
+      "value": 85000,
+      "label": "ASSUMPTION",
+      "note": "Lane 2 · Clear it. Loan interest, property taxes, insurance and management while the project waits. Invented."
+    },
+    "construction_and_repairs": {
+      "value": 40000,
+      "label": "ASSUMPTION",
+      "note": "Invented."
+    },
+    "fees_design_legal_sales": {
+      "value": 50000,
+      "label": "ASSUMPTION",
+      "note": "Invented."
+    },
+    "total": {
+      "value": 535000,
+      "label": "ASSUMPTION (derived)",
+      "formula": "sum of cost_to_create lines"
+    }
+  },
+  "paid_by": {
+    "family_price": {
+      "value": 285000,
+      "label": "ASSUMPTION",
+      "note": "Fixed by income. A real tool would derive this from a dated income-limits table, the affordable-cost formula in the statute, a mortgage rate, taxes and insurance. Invented."
+    },
+    "public_subsidies": {
+      "value": 100000,
+      "label": "ASSUMPTION",
+      "note": "Lane 3 · Fund it. Placeholder city and state funds, not real programs."
+    },
+    "rent_earned_while_waiting": {
+      "value": 55000,
+      "label": "ASSUMPTION",
+      "note": "Lane 3 · Fund it. Earned income from an existing building while it is held. Invented."
+    },
+    "fundraising_the_gap": {
+      "value": 95000,
+      "label": "ASSUMPTION",
+      "note": "Lane 3 · Fund it. Whatever is left after the other sources. Placeholder donors."
+    },
+    "total": {
+      "value": 535000,
+      "label": "ASSUMPTION (derived)",
+      "formula": "sum of paid_by lines"
+    }
+  },
+  "balance": {
+    "value": 0,
+    "label": "ASSUMPTION (derived)",
+    "formula": "paid_by.total - cost_to_create.total",
+    "note": "The equation: what the family can pay + subsidies + fundraising (and earned income) − cost to create = $0."
+  },
+  "time_sensitivity": {
+    "label": "ASSUMPTION",
+    "note": "In the typical project this is based on, a 10-month schedule slip made the fundraising needed grow about 7 times. Time is money on both sides of the equation."
+  }
+}
