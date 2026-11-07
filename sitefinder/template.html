@@ -761,6 +761,16 @@ a{color:var(--accent)}
 .leaflet-container{font-family:var(--body)}
 .leaflet-tooltip{font-size:12px}
 .leaflet-control-attribution{font-size:10px}
+/* Lot card on the map */
+.lotcard{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 24px #0003;padding:12px 14px;width:300px;font-size:13px;display:none}
+.lotcard.on{display:block}
+.lotcard h4{margin:0 0 2px;font:600 17px/1.2 var(--display)}
+.lotcard .astats{margin:8px 0;grid-template-columns:auto 1fr}
+.lotcard .astats span{white-space:nowrap}
+.lotcard .akey{margin:6px 0 10px}
+.lotcard .row{display:flex;gap:8px;justify-content:space-between;align-items:center}
+.lotcard .warn{color:var(--warn);font-size:12px;margin:0 0 8px}
+@media (max-width:600px){.lotcard{width:210px;font-size:12px}}
 /* Aerial view */
 .aerial{display:grid;grid-template-columns:minmax(0,520px) minmax(220px,1fr);gap:16px;align-items:start}
 @media (max-width:900px){.aerial{grid-template-columns:1fr}}
@@ -788,7 +798,7 @@ a{color:var(--accent)}
   <header>
     <div>
       <h1>OC Site Finder</h1>
-      <p>Public surplus land and Housing Element sites across Orange County, checked against state housing laws, livability and how far each city is behind its housing target.</p>
+      <p>Find land for the next affordable home in Orange County. Every candidate lot is checked against California's new housing laws, scored for livability, and shown on the ground: zoom into a lot to see how many homes fit.</p>
     </div>
     <div class="note mono" id="stamp"></div>
   </header>
@@ -798,15 +808,17 @@ a{color:var(--accent)}
       <h3>Filter and rank</h3>
       <div><label for="city">City</label><select id="city"></select></div>
       <div><label for="only">Show</label>
-        <select id="only"><option value="viable">Sites with a legal pathway</option><option value="all">All surplus sites</option></select></div>
+        <select id="only"><option value="viable">Sites with a legal pathway</option><option value="all">All candidate sites</option></select></div>
       <div><label for="size">Site size</label>
         <select id="size"><option value="all">Any size</option><option value="small" selected>Small: 4–30 homes (nonprofit scale)</option><option value="mid">Mid: 31–150 homes</option><option value="large">Large: 150+ homes</option></select></div>
       <div><label for="src">Land source</label>
         <select id="src"><option value="all">All candidate land</option><option value="surplus_land">Public surplus land only</option><option value="housing_element">Housing Element sites only</option><option value="land_use">Vacant lots, parking &amp; faith sites only</option></select></div>
+      <details><summary class="note" style="cursor:pointer">Adjust ranking</summary><div class="stack" style="margin-top:10px">
       <div><label for="w-homes"><span>Weight: homes</span><span id="v-homes" class="mono"></span></label><input type="range" id="w-homes" min="0" max="10" value="4"></div>
       <div><label for="w-liv"><span>Weight: livability</span><span id="v-liv" class="mono"></span></label><input type="range" id="w-liv" min="0" max="10" value="3"></div>
       <div><label for="w-pres"><span>Weight: city pressure</span><span id="v-pres" class="mono"></span></label><input type="range" id="w-pres" min="0" max="10" value="3"></div>
-      <p class="note" style="margin:0">Score = weighted mix of homes (log scale), livability (0–100) and the city's shortfall on lower-income homes (0–100).</p>
+      <p class="note" style="margin:0">Score mixes how many homes fit, livability, and how far the city is behind on lower-income homes.</p>
+      </div></details>
     </div>
     <div class="list" id="list" aria-label="Ranked sites"></div>
   </aside>
@@ -820,7 +832,7 @@ a{color:var(--accent)}
         <label><input type="checkbox" id="L-flood"> Flood zones</label>
         <label><input type="checkbox" id="L-photo" checked> Aerial photos when zoomed in</label>
       </div>
-      <p class="note" style="margin:0 0 6px">Click a site to see its details · double-click to zoom to the lot · scroll or use +/− to zoom.</p>
+      <p class="note" style="margin:0 0 6px">Click a site for details · <b>double-click to zoom into the lot</b> and watch what fits · scroll or use +/− to zoom.</p>
       <div id="lmap" role="application" aria-label="Map of candidate sites. Drag to pan, scroll or use the buttons to zoom."></div>
       <div class="legend">
         <span><i class="sw" style="background:var(--opp0)"></i>Low resource</span>
@@ -844,7 +856,7 @@ a{color:var(--accent)}
         <div class="citybars" id="cities"></div>
       </div>
       <div class="panel stack">
-        <h2>What the data can and can't say yet</h2>
+        <h2>Method and sources</h2>
         <div id="caveats" class="note" style="font-size:13px"></div>
         <h3>Sources</h3>
         <div id="sources" class="note"></div>
@@ -886,13 +898,19 @@ const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).
 let M = null, LY = {}, markers = new Map(), flyNext = false;
 
 function initMap(){
-  M = L.map("lmap", {zoomControl:true, preferCanvas:true, minZoom:9, maxZoom:20, zoomSnap:0.5, attributionControl:true});
+  M = L.map("lmap", {zoomControl:true, preferCanvas:true, minZoom:9, maxZoom:20, zoomSnap:0.25, zoomDelta:0.5,
+    wheelPxPerZoomLevel:140, wheelDebounceTime:60, attributionControl:true});
   M.attributionControl.setPrefix("").addAttribution("Roads: US Census TIGER · Tracts: TCAC/HCD · Photos: USDA NAIP");
   M.fitBounds(D.map.bounds);
   const oppCol = {"Low Resource":css("--opp0"),"Moderate Resource":css("--opp1"),"High Resource":css("--opp2"),"Highest Resource":css("--opp3")};
   M.createPane("roads"); M.getPane("roads").style.zIndex = 420; M.getPane("roads").style.pointerEvents = "none";
   M.createPane("photos"); M.getPane("photos").style.zIndex = 430;
+  M.createPane("lot"); M.getPane("lot").style.zIndex = 440; M.getPane("lot").style.pointerEvents = "none";
   M.createPane("sites"); M.getPane("sites").style.zIndex = 450;
+  const Card = L.Control.extend({onAdd(){ const d = L.DomUtil.create("div", "lotcard"); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
+    d.addEventListener("click", e => { const act = e.target.dataset.act; if (act === "replay") animateLot(); if (act === "details") { e.preventDefault(); $("#detail").scrollIntoView({behavior:"smooth"}); } });
+    return d; }});
+  lotCard = new Card({position:"topright"}).addTo(M).getContainer();
   LY.opp = L.geoJSON(D.map.tracts, {style: f => ({fillColor: oppCol[f.properties.cat] || css("--opp0"), fillOpacity:.75, color: css("--panel"), weight:.5})});
   LY.land = L.geoJSON(D.map.tracts, {style: () => ({fillColor: css("--land"), fillOpacity:1, color: css("--roadedge"), weight:.3})});
   if (D.map.roads) {
@@ -915,7 +933,8 @@ function initMap(){
   ["#L-opp","#L-transit","#L-flood","#L-photo"].forEach(id => $(id).onchange = sync);
   if (!D.map.transit) $("#L-transit").parentElement.style.display = "none";
   if (!D.map.flood) $("#L-flood").parentElement.style.display = "none";
-  M.on("zoomend moveend", drawPhotos);
+  const safe = f => { try { f(); } catch (e) { console.warn(e); } };
+  M.on("moveend", () => { safe(drawPhotos); safe(autoPickLot); safe(updateLot); });
   sync();
 }
 
@@ -926,42 +945,76 @@ function zoomToSite(id){
   else if (s.aerial && s.aerial.bounds) b = L.latLngBounds(s.aerial.bounds);
   if (b && b.isValid()) M.flyToBounds(b.pad(0.6), {maxZoom: 19, duration: .9});
   else M.flyTo([s.lat, s.lon], 17, {duration: .9});
-  $("#lmap").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest"});
+  const r = $("#lmap").getBoundingClientRect();
+  if (r.top < 0 || r.bottom > innerHeight) $("#lmap").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest"});
 }
 
+const photoLayers = new Map();   // site id -> [imageOverlay, outline]
 function drawPhotos(){
   const z = M.getZoom();
-  LY.sites.eachLayer(m => { m._r0 = m._r0 || m.getRadius(); m.setRadius(z >= 16 ? 5 : m._r0); m.setStyle({fillOpacity: z >= 16 ? .7 : .95}); });
-  LY.photos.clearLayers();
-  if (!$("#L-photo").checked || M.getZoom() < 16) return;
-  const view = M.getBounds();
-  D.sites.filter(s => s.aerial && s.aerial.bounds && view.intersects(s.aerial.bounds)).slice(0, 14).forEach(s => {
-    L.imageOverlay(s.aerial.img, s.aerial.bounds, {pane:"photos", opacity:1, interactive:false, alt:""}).addTo(LY.photos);
-    if (s.outline) L.geoJSON(s.outline, {pane:"photos", interactive:false, style:{color:"#ffe14d", weight:2.5, fill:false}}).addTo(LY.photos);
+  markers.forEach(m => { m.setRadius(z >= 16 ? 5 : m.options.r0); });
+  const want = new Set();
+  if ($("#L-photo").checked && z >= 15.5) {
+    const view = M.getBounds().pad(0.3);
+    D.sites.filter(s => s.aerial && s.aerial.img && s.aerial.bounds && view.intersects(s.aerial.bounds))
+      .slice(0, 24).forEach(s => want.add(s.id));
+  }
+  photoLayers.forEach((ls, id) => { if (!want.has(id)) { ls.forEach(l => l.remove()); photoLayers.delete(id); } });
+  want.forEach(id => {
+    if (photoLayers.has(id)) return;
+    const s = D.sites.find(x => x.id === id);
+    const ls = [L.imageOverlay(s.aerial.img, s.aerial.bounds, {pane:"photos", interactive:false, alt:""})];
+    if (s.outline) ls.push(L.geoJSON(s.outline, {pane:"photos", interactive:false, style:{color:"#ffe14d", weight:2, fill:false, opacity:.8}}));
+    ls.forEach(l => l.addTo(LY.photos)); photoLayers.set(id, ls);
   });
 }
 
+// Zoomed in on a lot without clicking it: select the lot under the map centre
+function autoPickLot(){
+  if (M.getZoom() < 17) return;
+  const c = M.getCenter();
+  const vis = new Set(visible().map(r => r.s.id));
+  let best = null, bd = Infinity;
+  D.sites.forEach(s => {
+    if (!s.aerial || !s.aerial.bounds || !vis.has(s.id)) return;
+    if (!L.latLngBounds(s.aerial.bounds).contains(c)) return;
+    const d = c.distanceTo([s.lat, s.lon]);
+    if (d < bd) { bd = d; best = s; }
+  });
+  if (best && best.id !== selected && bd < 120) { flyNext = false; pick(best.id); }
+}
+
+let markerKey = "";
 function drawMap(rows){
   if (!M) initMap();
-  const col = {likely:css("--good"), maybe:css("--warn"), none:css("--none")};
-  LY.sites.clearLayers(); markers.clear();
-  rows.forEach(({s}) => {
-    const m = L.circleMarker([s.lat, s.lon], {pane:"sites", radius: Math.max(5, Math.min(11, 4 + Math.sqrt(s.homes))),
-      color: css("--panel"), weight: 1.5, fillColor: col[statusOf(s)], fillOpacity: .95})
-      .bindTooltip(`<b>${esc(s.name)}</b><br>${esc(s.city)} · ${s.homes ? s.homes + " homes" : "no pathway"}<br><span style="opacity:.7">Double-click to zoom to the lot</span>`, {direction:"top"})
-      .on("click", () => { flyNext = false; pick(s.id); })
-      .on("dblclick", e => { L.DomEvent.stop(e); if (selected !== s.id) { flyNext = false; pick(s.id); } zoomToSite(s.id); });
-    m.addTo(LY.sites); markers.set(s.id, m);
-  });
+  const key = rows.map(r => r.s.id).join("|");
+  if (key !== markerKey) {
+    markerKey = key;
+    const col = {likely:css("--good"), maybe:css("--warn"), none:css("--none")};
+    LY.sites.clearLayers(); markers.clear(); M.closeTooltip && M.eachLayer(l => l.closeTooltip && l.closeTooltip());
+    rows.forEach(({s}) => {
+      const r0 = Math.max(5, Math.min(11, 4 + Math.sqrt(s.homes)));
+      const m = L.circleMarker([s.lat, s.lon], {pane:"sites", radius: M.getZoom() >= 16 ? 5 : r0, r0,
+        color: css("--panel"), weight: 1.5, fillColor: col[statusOf(s)], fillOpacity: .95, bubblingMouseEvents:false})
+        .bindTooltip(`<b>${esc(s.name)}</b><br>${esc(s.city)} · ${s.homes ? s.homes + " homes" : "no pathway"}<br><span style="opacity:.7">Double-click to zoom to the lot</span>`, {direction:"top"})
+        .on("click", () => { flyNext = false; if (selected !== s.id) pick(s.id); })
+        .on("dblclick", e => { L.DomEvent.stop(e); m.closeTooltip(); if (selected !== s.id) { flyNext = false; pick(s.id); } zoomToSite(s.id); });
+      m.addTo(LY.sites); markers.set(s.id, m);
+    });
+  }
   LY.sel.clearLayers();
   const s = D.sites.find(x => x.id === selected);
+  if ((s && s.id) !== lotFor) setLot(s);
   if (s) {
     L.circleMarker([s.lat, s.lon], {pane:"sites", radius:14, color:css("--ink"), weight:3, fill:false, interactive:false}).addTo(LY.sel);
-    if (s.outline) L.geoJSON(s.outline, {pane:"sites", interactive:false, style:{color:"#ffe14d", weight:3, fill:false}}).addTo(LY.sel);
-    if (flyNext) M.flyTo([s.lat, s.lon], Math.max(M.getZoom(), s.aerial ? 17 : 15), {duration:.8});
+    if (s.outline && !s.aerial) L.geoJSON(s.outline, {pane:"sites", interactive:false, style:{color:"#ffe14d", weight:3, fill:false}}).addTo(LY.sel);
+    if (flyNext) {
+      if (s.aerial) zoomToSite(s.id); else M.flyTo([s.lat, s.lon], Math.max(M.getZoom(), 15), {duration:.8});
+    }
   }
   if (fitNext && rows.length) { M.fitBounds(L.latLngBounds(rows.map(r => [r.s.lat, r.s.lon])).pad(0.15), {maxZoom:15}); fitNext = false; }
   flyNext = false;
+  updateLot();
 }
 
 function drawList(rows){
@@ -983,62 +1036,65 @@ function drawDetail(){
   if (!s) { $("#detail").innerHTML = ""; return; }
   const pr = s.pressure, lp = s.livability_parts || {};
   const label = {transit:"Transit access", environment:"Environmental health", opportunity:"Opportunity & schools", hazard:"Hazard safety"};
-  const parts = Object.keys(label).map(k => `<span>${label[k]}</span>${lp[k]==null ? `<span><span class="pill p-pending">pending data</span></span><span>—</span>` : `${bar(lp[k]/100)}<span>${lp[k]}</span>`}`).join("");
+  const parts = Object.keys(label).map(k => `<span>${label[k]}</span>${lp[k]==null ? `<span class="note">not covered here yet</span><span>—</span>` : `${bar(lp[k]/100)}<span>${lp[k]}</span>`}`).join("");
   const nLiv = Object.values(lp).filter(v => v != null).length;
   const people = D.rules.people;
-  const paths = s.pathways.map(p => `<tr>
+  const row = p => `<tr>
       <td><b>${esc(p.name)}</b><div class="note">${esc(p.plain)}${p.ownership ? " · ownership homes" : ""}</div></td>
-      <td><span class="pill p-${p.status}">${p.status}</span></td>
+      <td><span class="pill p-${p.status}">${p.status === "no" ? "no" : p.status === "unknown" ? "not checked" : p.status}</span></td>
       <td class="num">${p.homes ? p.homes : "—"}</td>
       <td>${esc(p.why)}</td>
-      <td><span class="pill p-${p.rule_status}">${p.rule_status.replace("_"," ")}</span>${p.source ? `<div><a href="${esc(p.source)}">rule source</a></div>` : ""}</td></tr>`).join("");
+      <td>${p.source ? `<a href="${esc(p.source)}">Source</a>` : ""}</td></tr>`;
+  const fits = s.pathways.filter(p => p.status === "likely" || p.status === "maybe");
+  const others = s.pathways.filter(p => !fits.includes(p));
+  const paths = fits.length ? fits.map(row).join("") : `<tr><td colspan="5" class="note">No state law clearly opens this lot as zoned. See the laws checked below.</td></tr>`;
   $("#detail").innerHTML = `
   <div class="panel stack">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline">
       <div><h2 style="font-size:26px">${esc(s.name)}</h2>
-        <div class="note">${esc(s.city)} · ${s.agency ? "owned by " + esc(s.agency) : s.source === "land_use" ? "parcel land use lead" : "Housing Element site"} · tract <span class="mono">${esc(s.tract || "—")}</span></div></div>
+        <div class="note">${esc(s.city)} · ${s.agency ? "owned by " + esc(s.agency) : s.source === "land_use" ? esc(s.existing_use) : "Housing Element site"} · tract <span class="mono">${esc(s.tract || "—")}</span></div></div>
       <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn" type="button" id="zoomlot">Zoom to lot on map</button>
+        ${s.aerial ? `<button class="btn" type="button" id="zoomlot">See what fits on the lot</button>` : `<button class="btn" type="button" id="zoomlot">Zoom to lot</button>`}
         <span class="pill p-${statusOf(s)==="none"?"no":statusOf(s)}">${esc(pathName(s))}</span></span>
     </div>
     <div class="dossier">
       <div class="tile"><div class="sub">Lot size</div><div class="big">${s.acres ? s.acres.toFixed(2) : "—"}<span style="font-size:16px"> ac</span></div>
-        <div class="sub mono">${s.lot_sqft ? fmt(s.lot_sqft)+" sq ft" : "size not in notice"} · ${s.apns.length} parcel${s.apns.length>1?"s":""}</div></div>
+        <div class="sub mono">${s.lot_sqft ? fmt(s.lot_sqft)+" sq ft" : "size not listed"} · ${s.apns.length} parcel${s.apns.length>1?"s":""}${s.aerial ? ` · ${fmt(s.aerial.usable_sqft)} open` : ""}</div></div>
       <div class="tile"><div class="sub">Homes that fit (best legal pathway)</div><div class="big">${s.homes || 0}</div>
         <div class="sub">${esc(pathName(s))}</div></div>
       <div class="tile"><div class="sub">People housed</div><div class="big">${s.people ? "≈"+fmt(s.people) : "0"}</div>
-        <div class="sub">Assumed ${s.avg_bedrooms} bedrooms avg × ${people.persons_per_bedroom} people/bedroom</div></div>
+        <div class="sub">Estimate from a typical bedroom mix</div></div>
       <div class="tile"><div class="sub">Livability index</div><div class="big">${s.livability ?? "—"}<span style="font-size:16px">/100</span></div>
-        <div class="sub">${nLiv} of 4 parts have data</div></div>
+        <div class="sub">${nLiv < 4 ? `Based on ${nLiv} of 4 measures` : "Transit, environment, opportunity, hazards"}</div></div>
     </div>
     <div class="tablewrap"><table>
-      <thead><tr><th>Legal pathway</th><th>Fit</th><th style="text-align:right">Homes</th><th>Why</th><th>Rule</th></tr></thead>
+      <thead><tr><th>Laws that open this lot</th><th>Fit</th><th style="text-align:right">Homes</th><th>Why</th><th></th></tr></thead>
       <tbody>${paths}</tbody></table></div>
+    ${others.length ? `<details><summary class="note" style="cursor:pointer">Other laws checked (${others.length})</summary>
+      <div class="tablewrap"><table><tbody>${others.map(row).join("")}</tbody></table></div></details>` : ""}
     ${s.zoning_note ? `<p class="note" style="margin:0">${esc(s.zoning_note)}</p>` : ""}
     <div class="two">
       <div class="stack">
         <h3>Livability</h3>
         <div class="parts">${parts}</div>
         <p class="note" style="margin:0">Opportunity category: <b>${esc(s.opportunity_category || "—")}</b>${s.env_burden_top5 ? ` · <span style="color:var(--bad)">tract is in the top 5% for environmental burden in the region</span>` : ""}.
-        ${s.livability_pending.length ? "Still to load: " + esc(s.livability_pending.join(", ")) + "." : ""}</p>
+</p>
       </div>
       <div class="stack">
         <h3>City pressure: ${esc(s.city)}</h3>
         ${pr ? `${bar(pr.lower_income_pct, pr.cycle_elapsed_pct)}
           <p style="margin:0"><b class="mono">${fmt(pr.lower_income_built)}</b> of <b class="mono">${fmt(pr.lower_income_target)}</b> lower-income homes built (${Math.round(pr.lower_income_pct*100)}%) with ${Math.round(pr.cycle_elapsed_pct*100)}% of the cycle gone.
           ${pr.behind_pace_homes ? `<b>${fmt(pr.behind_pace_homes)} homes behind pace.</b>` : "On or ahead of pace."} Pressure score <b class="mono">${pr.score}</b>/100.</p>`
-          : `<p class="note" style="margin:0">No RHNA row for this place. Land outside a city counts toward the county's target.</p>`}
+          : `<p class="note" style="margin:0">No state progress data for this place.</p>`}
         <h3>Land status</h3>
-        ${s.source === "land_use" ? `<p style="margin:0">${esc(s.existing_use)} today, per SCAG's 2024 parcel land use. Owner is not in the free data; check the county Assessor.${s.owner_type === "religious_proxy" ? " If a congregation owns it, SB 4 lets it build affordable homes on its parking or spare land without rezoning." : ""}</p>` : s.source === "housing_element" ? `<p style="margin:0">Listed in ${esc(s.city)}'s Housing Element site inventory${s.he_capacity ? `: <b class="mono">${s.he_capacity.lower}</b> lower-income, <b class="mono">${s.he_capacity.moderate}</b> moderate, <b class="mono">${s.he_capacity.above_moderate}</b> above-moderate homes` : ""}. Owner is not in the free data; check the county Assessor before reaching out.</p>` : `<p style="margin:0">Public surplus land: housing builders get first chance to negotiate under the Surplus Land Act. Notice sent <span class="mono">${esc(s.notice_date || "—")}</span>. Builders have 60 days to respond, then 90 days to negotiate; this notice is past that window, so confirm it is still available. If the agency sells it to someone else, any project of 10+ homes there must keep ${Math.round(D.rules.surplus_land.after_process_affordable_share*100)}% affordable.
+        ${s.source === "land_use" ? `<p style="margin:0">Currently: ${esc(s.existing_use).toLowerCase()} (SCAG 2024 land use). Owner is not in the free data; check the county Assessor.${s.owner_type === "religious_proxy" ? " If a congregation owns it, SB 4 lets it build affordable homes on its parking or spare land without rezoning." : ""}</p>` : s.source === "housing_element" ? `<p style="margin:0">Listed in ${esc(s.city)}'s Housing Element site inventory${s.he_capacity ? `: <b class="mono">${s.he_capacity.lower}</b> lower-income, <b class="mono">${s.he_capacity.moderate}</b> moderate, <b class="mono">${s.he_capacity.above_moderate}</b> above-moderate homes` : ""}. Owner is not in the free data; check the county Assessor before reaching out.</p>` : `<p style="margin:0">Public surplus land: housing builders get first chance to negotiate under the Surplus Land Act. Notice sent <span class="mono">${esc(s.notice_date || "—")}</span>. Builders have 60 days to respond, then 90 days to negotiate; this notice is past that window, so confirm it is still available. If the agency sells it to someone else, any project of 10+ homes there must keep ${Math.round(D.rules.surplus_land.after_process_affordable_share*100)}% affordable.
         ${s.notice_link ? ` <a href="${esc(s.notice_link)}">Read the notice</a>.` : ""}</p>`}
-        <p class="note" style="margin:0">${s.existing_use ? "Current use: " + esc(s.existing_use) + " · " : ""}Zoning: ${esc(s.zone_code ? s.zone_code + " (parcel zoning layer)" : (s.zoning_text || "not in data yet"))}</p>
+        <p class="note" style="margin:0">${s.existing_use ? "Current use: " + esc(s.existing_use) + " · " : ""}Zoning: ${esc(s.zone_code || s.zoning_text || "not available")}</p>
         <div class="apns">APN ${s.apns.map(esc).join(", ")}</div>
       </div>
     </div>
-  </div>` + aerialHTML(s);
-  const rb = $("#replay"); if (rb) rb.onclick = animateAerial;
+  </div>`;
   const zb = $("#zoomlot"); if (zb) zb.onclick = () => zoomToSite(s.id);
-  if (s.id !== lastAnimated) { lastAnimated = s.id; requestAnimationFrame(animateAerial); }
 }
 
 function drawCities(){
@@ -1052,73 +1108,81 @@ function drawCities(){
 const HOUSE = sz => `<path d="M${-sz*.42},${-sz*.05} L0,${-sz*.62} L${sz*.42},${-sz*.05} Z" fill="#1f8a4c" stroke="#0d3d21" stroke-width="1.2" stroke-linejoin="round"/><rect x="${-sz*.32}" y="${-sz*.08}" width="${sz*.64}" height="${sz*.5}" fill="#2fae64" stroke="#0d3d21" stroke-width="1.2"/>`;
 const BLOCK = sz => `<path d="M${-sz*.5},${-sz*.55} L0,${-sz*.85} L${sz*.5},${-sz*.55} Z" fill="#a8261c" stroke="#4a0f0a" stroke-width="1.2" stroke-linejoin="round"/><rect x="${-sz*.42}" y="${-sz*.58}" width="${sz*.84}" height="${sz*1.0}" fill="#d63b2f" stroke="#4a0f0a" stroke-width="1.2"/><rect x="${-sz*.22}" y="${-sz*.35}" width="${sz*.14}" height="${sz*.14}" fill="#ffe9c7"/><rect x="${sz*.08}" y="${-sz*.35}" width="${sz*.14}" height="${sz*.14}" fill="#ffe9c7"/>`;
 
-function aerialHTML(s){
-  const a = s.aerial;
-  if (!a) return `<div class="panel stack"><h3>Aerial view</h3><p class="note" style="margin:0">${s.city === "Santa Ana" && s.homes > 0 ? "Photo not downloaded yet: run fetch_aerials.py, then rebuild." : "Aerial view covers Santa Ana sites with a legal pathway so far."}</p></div>`;
-  const sz = a.icon_px, n = a.icons.length;
-  const bar = Math.max(10, Math.round(a.metres_across / 5 / 10) * 10), barPx = bar / a.metres_across * 100;
-  const icon = a.icon === "house" ? HOUSE : BLOCK;
-  return `<div class="panel stack">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-      <h2>What fits on the lot</h2><button class="btn" id="replay" type="button">Replay</button></div>
-    <div class="aerial">
-      <div class="photo">
-        ${a.img ? `<img src="${esc(a.img)}" alt="Aerial photo of ${esc(s.name)}" onerror="this.remove()">` : `<div class="noimg nophoto">Aerial photo still downloading. Lot outline and layout are real.</div>`}
-        <svg viewBox="0 0 ${a.px} ${a.px}" aria-hidden="true">
-          <defs>
-            <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#ff6b5a" fill-opacity=".35"/><line x1="0" y1="0" x2="0" y2="8" stroke="#ff6b5a" stroke-width="3"/></pattern>
-            <mask id="lotmask"><rect width="${a.px}" height="${a.px}" fill="#fff"/><path d="${a.parcel}" fill="#000"/></mask>
-          </defs>
-          <rect class="a-dim" width="${a.px}" height="${a.px}" fill="#0b1216" fill-opacity=".5" mask="url(#lotmask)"/>
-          ${a.buildings ? `<path class="bldg a-bldg" d="${a.buildings}"/>` : ""}
-          ${a.usable ? `<path class="usable a-use" d="${a.usable}"/>` : ""}
-          <path class="lot-line a-line" d="${a.parcel}"/>
-          <g transform="translate(18,${a.px - 22})" font-family="IBM Plex Mono,monospace" font-size="13" fill="#fff" stroke="none">
-            <rect x="0" y="0" width="${barPx / 100 * a.px}" height="5" fill="#fff" stroke="#000" stroke-width=".8"/>
-            <text x="0" y="-6" style="paint-order:stroke" stroke="#000" stroke-width="3">${bar} m</text></g>
-          ${a.icons.map(p => `<g class="a-icon" transform="translate(${p.x},${p.y + sz*0.2})"><g>${icon(sz)}</g></g>`).join("")}
-        </svg>
-        <div class="attrib">${a.img ? "Imagery: USDA NAIP · " : ""}Footprints: OC Public Works</div>
-      </div>
-      <div class="stack">
-        <div class="astats">
-          <span>Lot area</span><b>${fmt(a.parcel_sqft)} sq ft</b>
-          <span>Existing buildings</span><b>${a.stale_footprint_sqft ? "none (cleared)" : a.footprints_loaded ? fmt(a.building_sqft) + " sq ft" : "not loaded"}</b>
-          <span>Open, usable area</span><b>${fmt(a.usable_sqft)} sq ft (${a.parcel_sqft ? Math.round(a.usable_sqft / a.parcel_sqft * 100) : 0}%)</b>
-          <span>Homes (${esc(pathName(s))})</span><b>${s.homes}</b>
-          <span>Space per home</span><b>${s.homes ? fmt(Math.round(a.usable_sqft / s.homes)) + " sq ft" : "—"}</b>
-        </div>
-        <div class="akey">
-          <span><svg width="20" height="20" viewBox="-10 -14 20 20">${icon(16)}</svg>${a.icon === "house" ? "1 home (ownership lot)" : a.homes_per_icon + " homes per building"}</span>
-          <span><svg width="18" height="12"><rect width="18" height="12" fill="#5fd39a" fill-opacity=".45" stroke="#5fd39a"/></svg>open land</span>
-          <span><svg width="18" height="12"><rect width="18" height="12" fill="#ff6b5a" fill-opacity=".45" stroke="#ff8a7a"/></svg>existing buildings</span>
-          <span><svg width="18" height="12"><rect x="1" y="1" width="16" height="10" fill="none" stroke="#e0b400" stroke-width="2"/></svg>lot line</span>
-        </div>
-        ${a.stale_footprint_sqft ? `<p class="note" style="margin:0;color:var(--warn)">The county footprint layer still shows ${fmt(a.stale_footprint_sqft)} sq ft of buildings here, but the land-use record says vacant. Check the photo: if it shows cleared ground, the footprints are out of date and the whole lot is open.</p>` : ""}
-        ${a.fits ? "" : `<p class="note" style="margin:0;color:var(--warn)">Only ${n} of ${a.icon === "house" ? s.homes : Math.ceil(s.homes / a.homes_per_icon)} icons fit on the open ground at this spacing: the plan would need to build taller or clear existing buildings.</p>`}
-        <p class="note" style="margin:0">Usable area = lot minus a ${D.rules.aerial.setback_m} m edge strip minus existing buildings. Icons spread the legal home count over open ground to show scale; they are not a site plan.</p>
-      </div>
-    </div></div>`;
+function lotSVG(s){
+  const a = s.aerial, sz = a.icon_px, icon = a.icon === "house" ? HOUSE : BLOCK;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", `0 0 ${a.px} ${a.px}`);
+  svg.innerHTML = `<defs><pattern id="hatch-m" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#ff6b5a" fill-opacity=".35"/><line x1="0" y1="0" x2="0" y2="8" stroke="#ff6b5a" stroke-width="3"/></pattern></defs>
+    ${a.buildings ? `<path class="a-bldg" d="${a.buildings}" fill="url(#hatch-m)" stroke="#ff8a7a" stroke-width="1.2"/>` : ""}
+    ${a.usable ? `<path class="a-use" d="${a.usable}" fill="#5fd39a" fill-opacity=".35" stroke="#5fd39a" stroke-width="1.5" stroke-dasharray="5 4"/>` : ""}
+    <path class="a-line" d="${a.parcel}" fill="none" stroke="#ffe14d" stroke-width="3.5" stroke-linejoin="round"/>
+    ${a.icons.map(p => `<g transform="translate(${p.x},${p.y + sz*0.2})"><g class="a-icon">${icon(sz)}</g></g>`).join("")}`;
+  return svg;
 }
 
-function animateAerial(){
-  const root = $("#detail .photo"); if (!root) return;
+function lotCardHTML(s){
+  const a = s.aerial, icon = a.icon === "house" ? HOUSE : BLOCK;
+  return `<div class="row"><h4>${esc(s.name)}</h4></div>
+    <div class="note">${esc(s.city)} · ${esc(pathName(s))}</div>
+    <div class="astats">
+      <span>Homes that fit</span><b>${s.homes}</b>
+      <span>Lot area</span><b>${fmt(a.parcel_sqft)} sq ft</b>
+      <span>Open ground</span><b>${fmt(a.usable_sqft)} sq ft (${a.parcel_sqft ? Math.round(a.usable_sqft / a.parcel_sqft * 100) : 0}%)</b>
+      <span>Existing buildings</span><b>${a.stale_footprint_sqft ? "cleared" : a.footprints_loaded ? fmt(a.building_sqft) + " sq ft" : "—"}</b>
+    </div>
+    <div class="akey"><span><svg width="20" height="20" viewBox="-10 -14 20 20">${icon(16)}</svg>${a.icon === "house" ? "1 home" : a.homes_per_icon + " homes per building"}</span>
+      <span><svg width="14" height="10"><rect width="14" height="10" fill="#5fd39a" fill-opacity=".5" stroke="#5fd39a"/></svg>open</span>
+      <span><svg width="14" height="10"><rect width="14" height="10" fill="#ff6b5a" fill-opacity=".5" stroke="#ff8a7a"/></svg>built</span></div>
+    ${a.stale_footprint_sqft ? `<p class="warn">County records still show old buildings here; the photo shows the lot cleared.</p>` : ""}
+    ${a.fits ? "" : `<p class="warn">Not all homes fit on open ground: this would need taller buildings.</p>`}
+    <div class="row"><button class="btn" type="button" data-act="replay">Replay</button><a href="#detail" data-act="details">Full details</a></div>`;
+}
+
+let lotOverlay = null, lotFor = null, lotPlayed = null, lotCard = null;
+
+function setLot(s){
+  if (lotOverlay) { lotOverlay.remove(); lotOverlay = null; }
+  lotFor = null;
+  if (!s || !s.aerial || !s.aerial.bounds) { updateLot(); return; }
+  lotOverlay = L.svgOverlay(lotSVG(s), s.aerial.bounds, {pane:"lot", interactive:false});
+  lotFor = s.id; lotPlayed = null;
+  updateLot();
+}
+
+function updateLot(){
+  if (!M) return;
+  const s = D.sites.find(x => x.id === lotFor);
+  const close = s && M.getZoom() >= 16.5 && M.getBounds().contains(L.latLngBounds(s.aerial.bounds).getCenter());
+  const mk = s && markers.get(s.id);
+  if (close) {
+    if (!M.hasLayer(lotOverlay)) lotOverlay.addTo(M);
+    LY.sel.remove(); mk && mk.setStyle({opacity:0, fillOpacity:0});
+    lotCard.innerHTML = lotCardHTML(s); lotCard.classList.add("on");
+    if (lotPlayed !== s.id) { lotPlayed = s.id; requestAnimationFrame(animateLot); }
+  } else {
+    lotOverlay && lotOverlay.remove();
+    lotCard && lotCard.classList.remove("on");
+    LY.sel && !M.hasLayer(LY.sel) && LY.sel.addTo(M); mk && mk.setStyle({opacity:1, fillOpacity:.95});
+    if (!s || M.getZoom() < 15) lotPlayed = null;      // zooming back out lets it play again
+  }
+}
+
+function animateLot(){
+  const root = lotOverlay && lotOverlay.getElement(); if (!root) return;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const line = root.querySelector(".a-line"), parts = [".a-dim",".a-bldg",".a-use"].map(q => root.querySelector(q));
-  const icons = [...root.querySelectorAll(".a-icon > g")];
+  const line = root.querySelector(".a-line"), bldg = root.querySelector(".a-bldg"), use = root.querySelector(".a-use");
+  const icons = [...root.querySelectorAll(".a-icon")];
   root.getAnimations({subtree:true}).forEach(x => x.cancel());
   if (reduce || !line) return;
-  const L = line.getTotalLength();
-  line.style.strokeDasharray = L;
-  line.animate([{strokeDashoffset:L},{strokeDashoffset:0}], {duration:1300, easing:"cubic-bezier(.6,0,.3,1)", fill:"both"});
-  const [dim,bldg,use] = parts;
-  dim && dim.animate([{opacity:0},{opacity:1}], {duration:700, fill:"both"});
-  bldg && bldg.animate([{opacity:0},{opacity:1}], {duration:400, delay:1200, fill:"both"});
-  use && use.animate([{opacity:0},{opacity:1}], {duration:500, delay:1600, fill:"both"});
+  const len = line.getTotalLength();
+  line.style.strokeDasharray = len;
+  line.animate([{strokeDashoffset:len},{strokeDashoffset:0}], {duration:1300, easing:"cubic-bezier(.6,0,.3,1)", fill:"both"});
+  bldg && bldg.animate([{opacity:0},{opacity:1}], {duration:400, delay:1100, fill:"both"});
+  use && use.animate([{opacity:0},{opacity:1}], {duration:500, delay:1500, fill:"both"});
   const gap = Math.min(70, 1600 / Math.max(icons.length,1));
   icons.forEach((g,i) => g.animate(
     [{transform:"translateY(-14px) scale(0)",opacity:0},{transform:"translateY(2px) scale(1.15)",opacity:1,offset:.7},{transform:"translateY(0) scale(1)",opacity:1}],
-    {duration:420, delay:2100 + i*gap, easing:"cubic-bezier(.2,.8,.3,1.2)", fill:"both"}));
+    {duration:420, delay:2000 + i*gap, easing:"cubic-bezier(.2,.8,.3,1.2)", fill:"both"}));
 }
 
 function pick(id){ selected = id; render(); }
@@ -1137,16 +1201,13 @@ function init(){
   ["#city","#only","#size","#src"].forEach(s => $(s).oninput = () => { fitNext = true; render(); });
   $("#q").oninput = () => { fitNext = true; render(); };
   $("#q").onkeydown = e => { if (e.key === "Enter") { const r = visible()[0]; if (r) { flyNext = true; pick(r.s.id); } } };
-  $("#stamp").innerHTML = `${D.sites.length} candidate sites · ${Object.keys(D.cities).length} jurisdictions<br>rules checked ${esc(D.rules.checked)}`;
-  $("#caveats").innerHTML = `<ul style="margin:0;padding-left:18px">
-    <li>Housing Element sites come from SCAG's regional copy, which has no rows for Santa Ana, Costa Mesa, Huntington Beach, Tustin or Orange. Those cities' inventories have to come from the cities themselves.</li>
-    <li>Hazard, transit and environment layers were fetched for the Santa Ana area first; sites elsewhere show those parts as pending until the fetch runs county-wide.</li>
-    <li>Homes per pathway come from <span class="mono">rules.json</span>. Each rule is tagged verified (read in an HCD source) or secondary (city checklists and law-firm summaries that agree). Confirm secondary rules on leginfo before relying on them.</li>
-    <li>Parcels from one notice are grouped when their points are within ${D.rules.surplus_land.cluster_distance_m} m of each other. Confirm on a parcel map that they actually touch.</li>
-    <li>Zoning is read from the notice text, not the city's parcel layer, so treat a pathway as a lead.</li>
-    <li>People housed uses an assumed bedroom mix (${Object.entries(D.rules.people.bedroom_mix).map(([b,f]) => Math.round(f*100)+"% "+b+"-bed").join(", ")}).</li>
-    <li>City is the notice's postal city. Unincorporated land can carry a city's mailing name.</li>
-    <li>Price is not shown yet. For public land it's negotiated with the agency; Santa Ana assessed values load from the fetch script.</li></ul>`;
+  $("#stamp").innerHTML = `${fmt(D.sites.length)} candidate sites · ${Object.keys(D.cities).length} jurisdictions<br>Data as of ${new Date(D.generated + "T12:00:00").toLocaleDateString("en-US", {month:"short", year:"numeric"})}`;
+  $("#caveats").innerHTML = `<ul style="margin:0;padding-left:18px;display:grid;gap:6px">
+    <li><b>Where sites come from:</b> public land agencies declared surplus, parcels cities listed in their Housing Elements, and vacant lots, parking lots and religious sites from SCAG's 2024 parcel land use.</li>
+    <li><b>How homes are counted:</b> each lot is checked against SB 684/1123, SB 9, AB 2011, SB 4 and the city's own Housing Element listing; the tool shows the pathway with the most homes it can justify. "Maybe" means one condition needs checking on site.</li>
+    <li><b>What fits on the lot:</b> parcel lines minus existing buildings and a 1.5 m edge strip, shown on USDA aerial photos. Building icons show scale, not a site plan.</li>
+    <li><b>Livability</b> averages transit access, environmental health (CalEnviroScreen), neighborhood opportunity (TCAC/HCD) and hazard exposure (flood, fire, ground).</li>
+    <li><b>Limits:</b> ownership and asking price aren't in free public data; religious sites are a stand-in for faith-owned land until the Assessor confirms the owner.</li></ul>`;
   $("#sources").innerHTML = D.sources.map(s => s.url.startsWith("http") ? `<div><a href="${esc(s.url)}">${esc(s.name)}</a></div>` : `<div>${esc(s.name)}</div>`).join("");
   render();
 }
