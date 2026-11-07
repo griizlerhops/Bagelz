@@ -761,6 +761,26 @@ a{color:var(--accent)}
 .leaflet-container{font-family:var(--body)}
 .leaflet-tooltip{font-size:12px}
 .leaflet-control-attribution{font-size:10px}
+/* Site brief */
+.brief-back{position:fixed;inset:0;background:#0b121699;display:none;z-index:2000;overflow:auto;padding:24px 12px}
+.brief-back.on{display:block}
+.brief{max-width:820px;margin:0 auto;background:var(--panel);color:var(--ink);border-radius:8px;box-shadow:0 20px 60px #0006;padding:28px 32px}
+@media (max-width:600px){.brief{padding:18px}}
+.brief header{border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:16px;display:block}
+.brief .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.brief h2{font-size:28px;margin:2px 0}
+.brief .grid{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start}
+@media (max-width:700px){.brief .grid{grid-template-columns:1fr}}
+.brief .pic{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;background:#3a4a45}
+.brief .pic img,.brief .pic svg{position:absolute;inset:0;width:100%;height:100%}
+.brief .nums{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.brief .nums div{border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.brief .nums b{display:block;font:600 24px/1.1 var(--display)}
+.brief .nums span{font-size:12px;color:var(--muted)}
+.brief h3{margin:16px 0 6px}
+.brief ol{margin:0;padding-left:20px;display:grid;gap:4px}
+.brief .actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:20px;border-top:1px solid var(--line);padding-top:14px}
+.brief pre{white-space:pre-wrap;font:13px/1.5 var(--body);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px;max-height:260px;overflow:auto}
 /* Lot card on the map */
 .lotcard{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 24px #0003;padding:12px 14px;width:300px;font-size:13px;display:none}
 .lotcard.on{display:block}
@@ -865,6 +885,7 @@ a{color:var(--accent)}
   </main>
 </div>
 
+<div class="brief-back" id="briefBack" role="dialog" aria-modal="true" aria-label="Site brief"><div class="brief" id="brief"></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const D = /*__DATA__*/null;
@@ -908,7 +929,7 @@ function initMap(){
   M.createPane("lot"); M.getPane("lot").style.zIndex = 440; M.getPane("lot").style.pointerEvents = "none";
   M.createPane("sites"); M.getPane("sites").style.zIndex = 450;
   const Card = L.Control.extend({onAdd(){ const d = L.DomUtil.create("div", "lotcard"); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
-    d.addEventListener("click", e => { const act = e.target.dataset.act; if (act === "replay") animateLot(); if (act === "details") { e.preventDefault(); $("#detail").scrollIntoView({behavior:"smooth"}); } });
+    d.addEventListener("click", e => { const act = e.target.dataset.act; if (act === "replay") animateLot(); if (act === "brief") openBrief(lotFor); if (act === "details") { e.preventDefault(); $("#detail").scrollIntoView({behavior:"smooth"}); } });
     return d; }});
   lotCard = new Card({position:"topright"}).addTo(M).getContainer();
   LY.opp = L.geoJSON(D.map.tracts, {style: f => ({fillColor: oppCol[f.properties.cat] || css("--opp0"), fillOpacity:.75, color: css("--panel"), weight:.5})});
@@ -1052,9 +1073,10 @@ function drawDetail(){
   <div class="panel stack">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline">
       <div><h2 style="font-size:26px">${esc(s.name)}</h2>
-        <div class="note">${esc(s.city)} · ${s.agency ? "owned by " + esc(s.agency) : s.source === "land_use" ? esc(s.existing_use) : "Housing Element site"} · tract <span class="mono">${esc(s.tract || "—")}</span></div></div>
+        <div class="note">${esc(s.city)}${s.city_note ? ` <span title="${esc(s.city_note)}" style="color:var(--warn)">(${esc(s.city_note)})</span>` : ""} · ${s.agency ? "owned by " + esc(s.agency) : s.source === "land_use" ? esc(s.existing_use) : "Housing Element site"} · tract <span class="mono">${esc(s.tract || "—")}</span></div></div>
       <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         ${s.aerial ? `<button class="btn" type="button" id="zoomlot">See what fits on the lot</button>` : `<button class="btn" type="button" id="zoomlot">Zoom to lot</button>`}
+        <button class="btn" type="button" id="openbrief">Site brief</button>
         <span class="pill p-${statusOf(s)==="none"?"no":statusOf(s)}">${esc(pathName(s))}</span></span>
     </div>
     <div class="dossier">
@@ -1095,6 +1117,7 @@ function drawDetail(){
     </div>
   </div>`;
   const zb = $("#zoomlot"); if (zb) zb.onclick = () => zoomToSite(s.id);
+  const ob = $("#openbrief"); if (ob) ob.onclick = () => openBrief(s.id);
 }
 
 function drawCities(){
@@ -1135,7 +1158,7 @@ function lotCardHTML(s){
       <span><svg width="14" height="10"><rect width="14" height="10" fill="#ff6b5a" fill-opacity=".5" stroke="#ff8a7a"/></svg>built</span></div>
     ${a.stale_footprint_sqft ? `<p class="warn">County records still show old buildings here; the photo shows the lot cleared.</p>` : ""}
     ${a.fits ? "" : `<p class="warn">Not all homes fit on open ground: this would need taller buildings.</p>`}
-    <div class="row"><button class="btn" type="button" data-act="replay">Replay</button><a href="#detail" data-act="details">Full details</a></div>`;
+    <div class="row"><button class="btn" type="button" data-act="replay">Replay</button><button class="btn" type="button" data-act="brief">Site brief</button></div>`;
 }
 
 let lotOverlay = null, lotFor = null, lotPlayed = null, lotCard = null;
@@ -1185,6 +1208,116 @@ function animateLot(){
     {duration:420, delay:2000 + i*gap, easing:"cubic-bezier(.2,.8,.3,1.2)", fill:"both"}));
 }
 
+function nextSteps(s){
+  const steps = [];
+  if (s.source === "surplus_land") {
+    steps.push(`Contact ${s.agency || "the owning agency"} to confirm the land is still available (notice sent ${s.notice_date || "date unknown"}).`);
+    steps.push("Send a written notice of interest as a housing sponsor; agencies must negotiate in good faith for 90 days with sponsors who respond.");
+    if (s.notice_link) steps.push(`Read the agency's notice: ${s.notice_link}`);
+  } else if (s.owner_type === "religious_proxy") {
+    steps.push("Confirm the owner in the Orange County Assessor's records (the parcel is used as a religious facility today).");
+    steps.push("Reach out to the congregation's leadership: SB 4 lets them build affordable homes on spare land or parking without rezoning (draft letter below).");
+  } else if (s.source === "housing_element") {
+    steps.push("Look up the owner in the Orange County Assessor's records.");
+    steps.push(`Ask ${s.city} housing staff about this site: the city listed it in its Housing Element and has to keep it available for these homes.`);
+  } else {
+    steps.push("Look up the owner in the Orange County Assessor's records and ask whether they would sell or partner.");
+  }
+  const best = s.pathways.find(p => p.id === s.best_pathway);
+  if (best && best.status === "maybe" && best.id !== "SB4") steps.push(`Check the open condition for ${best.name}: ${best.why}`);
+  steps.push(`Confirm zoning (${s.zone_code || s.zoning_text || "unknown"}) and development standards with ${s.city} planning before an offer.`);
+  if (s.pressure && s.pressure.behind_pace_homes) steps.push(`Point out to ${s.city} that it is ${fmt(s.pressure.behind_pace_homes)} lower-income homes behind pace on its state target.`);
+  return steps;
+}
+
+function letterText(s){
+  return `Dear Pastor / Board Chair,
+
+My name is [Your name], and I work with [Your nonprofit], a nonprofit that builds affordable homes for working families in Orange County.
+
+We noticed that your congregation's property at APN ${s.apns[0]} in ${s.city} may be a good fit for a small affordable housing project. A California law that took effect in 2024 (SB 4, the Affordable Housing on Faith and Higher Education Lands Act) lets congregations build affordable homes on their land, including parking lots, without rezoning or a public hearing.
+
+Based on public data, the open part of your property could hold roughly ${s.homes} homes for families from your own community, while keeping your worship space and ministries in place. Many congregations lease the land rather than sell it, so the property stays with the church and can support its mission for decades.
+
+We would love to meet, hear about your congregation's goals, and walk you through what a project could look like, with no commitment.
+
+With gratitude,
+[Your name]
+[Your nonprofit] · [phone] · [email]`;
+}
+
+function briefText(s){
+  const fits = s.pathways.filter(p => p.status === "likely" || p.status === "maybe");
+  const a = s.aerial, pr = s.pressure;
+  return [`SITE BRIEF: ${s.name}`,
+    `${s.city}${s.city_note ? " (" + s.city_note + ")" : ""} · APN ${s.apns.join(", ")}`,
+    `Owner / source: ${s.agency ? s.agency + " (public surplus land)" : s.source === "housing_element" ? "Housing Element site (owner not in public data)" : (s.existing_use || "unknown")}`,
+    ``,
+    `Lot: ${s.acres ? s.acres.toFixed(2) + " acres" : "size unknown"}${s.lot_sqft ? " (" + fmt(s.lot_sqft) + " sq ft)" : ""}${a ? ", " + fmt(a.usable_sqft) + " sq ft open ground" : ""}`,
+    `Homes that fit: ${s.homes} (${pathName(s)}) · about ${fmt(s.people)} people`,
+    `Livability: ${s.livability ?? "—"}/100 · Opportunity: ${s.opportunity_category || "—"}`,
+    pr ? `${s.city}: ${fmt(pr.lower_income_built)} of ${fmt(pr.lower_income_target)} lower-income homes built (${Math.round(pr.lower_income_pct*100)}%) with ${Math.round(pr.cycle_elapsed_pct*100)}% of the cycle gone` : "",
+    ``, `LAWS THAT OPEN THIS LOT`,
+    ...(fits.length ? fits.map(p => `- ${p.name} (${p.status}): ${p.homes} homes. ${p.why}`) : ["- None clearly applies as zoned."]),
+    ``, `NEXT STEPS`, ...nextSteps(s).map((x,i) => `${i+1}. ${x}`),
+    ``, `Source: OC Site Finder · data as of ${D.generated}`].filter(x => x !== null).join("\n");
+}
+
+function briefHTML(s){
+  const fits = s.pathways.filter(p => p.status === "likely" || p.status === "maybe");
+  const a = s.aerial, pr = s.pressure;
+  let pic = "";
+  if (a) {
+    const icon = a.icon === "house" ? HOUSE : BLOCK, sz = a.icon_px;
+    pic = `<div class="pic">${a.img ? `<img src="${esc(a.img)}" alt="">` : ""}
+      <svg viewBox="0 0 ${a.px} ${a.px}"><defs><pattern id="hatch-b" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#ff6b5a" fill-opacity=".35"/><line x1="0" y1="0" x2="0" y2="8" stroke="#ff6b5a" stroke-width="3"/></pattern></defs>
+      ${a.buildings ? `<path d="${a.buildings}" fill="url(#hatch-b)" stroke="#ff8a7a"/>` : ""}${a.usable ? `<path d="${a.usable}" fill="#5fd39a" fill-opacity=".35" stroke="#5fd39a"/>` : ""}
+      <path d="${a.parcel}" fill="none" stroke="#ffe14d" stroke-width="4"/>${a.icons.map(p => `<g transform="translate(${p.x},${p.y + sz*0.2})">${icon(sz)}</g>`).join("")}</svg></div>`;
+  }
+  return `<header><div class="eyebrow">Site brief · OC Site Finder</div><h2>${esc(s.name)}</h2>
+      <div class="note">${esc(s.city)}${s.city_note ? ` (${esc(s.city_note)})` : ""} · APN ${s.apns.map(esc).join(", ")}</div></header>
+    <div class="grid">${pic || "<div></div>"}
+      <div>
+        <div class="nums">
+          <div><b>${s.acres ? s.acres.toFixed(2) : "—"} ac</b><span>${a ? fmt(a.usable_sqft) + " sq ft open" : "lot size"}</span></div>
+          <div><b>${s.homes}</b><span>homes · ${esc(pathName(s))}</span></div>
+          <div><b>≈${fmt(s.people)}</b><span>people housed (estimate)</span></div>
+          <div><b>${s.livability ?? "—"}/100</b><span>livability</span></div>
+        </div>
+        <p style="margin:0"><b>Owner:</b> ${s.agency ? esc(s.agency) + " (public surplus land)" : s.source === "housing_element" ? "listed in the city's Housing Element; owner not in public data" : esc(s.existing_use || "unknown") + "; confirm owner with the Assessor"}</p>
+        ${pr ? `<p style="margin:6px 0 0"><b>${esc(s.city)}</b> has built ${Math.round(pr.lower_income_pct*100)}% of its lower-income target with ${Math.round(pr.cycle_elapsed_pct*100)}% of the cycle gone${pr.behind_pace_homes ? ` (${fmt(pr.behind_pace_homes)} homes behind pace)` : " (on pace)"}.</p>` : ""}
+      </div></div>
+    <h3>Laws that open this lot</h3>
+    <ol style="list-style:none;padding:0">${fits.length ? fits.map(p => `<li><span class="pill p-${p.status}">${p.status}</span> <b>${esc(p.name)}</b>: ${p.homes} homes. ${esc(p.why)}</li>`).join("") : "<li>No state law clearly opens this lot as zoned.</li>"}</ol>
+    <h3>Next steps</h3>
+    <ol>${nextSteps(s).map(x => `<li>${esc(x)}</li>`).join("")}</ol>
+    ${s.owner_type === "religious_proxy" ? `<h3>Draft letter to the congregation</h3><pre id="letter">${esc(letterText(s))}</pre>` : ""}
+    <div class="actions">
+      <span class="note" id="copied" aria-live="polite" style="margin-right:auto"></span>
+      ${s.owner_type === "religious_proxy" ? `<button class="btn" type="button" data-b="letter">Copy letter</button>` : ""}
+      <button class="btn" type="button" data-b="text">Copy brief as text</button>
+      <button class="btn" type="button" data-b="close">Close</button>
+    </div>`;
+}
+
+function openBrief(id){
+  const s = D.sites.find(x => x.id === id); if (!s) return;
+  const back = $("#briefBack"), box = $("#brief");
+  box.innerHTML = briefHTML(s); back.classList.add("on"); back.scrollTop = 0;
+  const copy = async (txt, label) => {
+    try { await navigator.clipboard.writeText(txt); $("#copied").textContent = label + " copied."; }
+    catch (e) { $("#copied").textContent = "Copy blocked by the browser: select the text and copy it."; }
+  };
+  box.onclick = e => {
+    const b = e.target.dataset.b;
+    if (b === "close") closeBrief();
+    if (b === "text") copy(briefText(s), "Brief");
+    if (b === "letter") copy(letterText(s), "Letter");
+  };
+  box.querySelector('[data-b="close"]').focus();
+}
+function closeBrief(){ $("#briefBack").classList.remove("on"); const ob = $("#openbrief"); ob && ob.focus(); }
+
 function pick(id){ selected = id; render(); }
 
 function render(){
@@ -1209,6 +1342,8 @@ function init(){
     <li><b>Livability</b> averages transit access, environmental health (CalEnviroScreen), neighborhood opportunity (TCAC/HCD) and hazard exposure (flood, fire, ground).</li>
     <li><b>Limits:</b> ownership and asking price aren't in free public data; religious sites are a stand-in for faith-owned land until the Assessor confirms the owner.</li></ul>`;
   $("#sources").innerHTML = D.sources.map(s => s.url.startsWith("http") ? `<div><a href="${esc(s.url)}">${esc(s.name)}</a></div>` : `<div>${esc(s.name)}</div>`).join("");
+  $("#briefBack").addEventListener("click", e => { if (e.target.id === "briefBack") closeBrief(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#briefBack").classList.contains("on")) closeBrief(); });
   render();
 }
 init();

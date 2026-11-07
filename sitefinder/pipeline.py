@@ -351,7 +351,7 @@ def check_pathways(site, hazards):
         n = min(r["max_homes"], int(sqft // r["min_new_lot_sqft"]))
         add("SB684_SB1123", "likely", n, f"Multifamily zoning, {acres:.2f} acres (limit {r['max_acres_multifamily_zone']}).")
     elif zc == "single_family" and acres <= r["max_acres_singlefamily_zone_vacant"]:
-        n = min(r["max_homes"], int(sqft // r["min_new_lot_sqft"]))
+        n = min(r["max_homes"], int(sqft // r["min_new_lot_sqft_singlefamily"]))
         add("SB684_SB1123", "likely" if vacant else "maybe", n,
             "Single-family zoning under 1.5 acres" + ("" if vacant else "; lot must be vacant (current use says otherwise)."))
     elif zc in ("multi_family", "single_family"):
@@ -495,6 +495,15 @@ def main():
             if isinstance(code, str) and code.strip() and not s.get("zone_code"):
                 s["zone_code"] = code.strip()
                 s["slope"] = None if pd.isna(zj.iloc[i].get("SLOPE")) else float(zj.iloc[i]["SLOPE"])
+
+    if zon is not None:
+        zcities = set(zon.CITY.str.title())
+        zb = zon.total_bounds
+        for s in sites:
+            outside = not (zb[0] <= s["lon"] <= zb[2] and zb[1] <= s["lat"] <= zb[3])
+            if s["city"] in zcities and outside:
+                s["city_note"] = f"{s['city']} mailing address; parcel is outside {s['city']} city limits (likely unincorporated county)"
+                s["city"] = "Orange County (unincorporated)"
 
     def covered(name, s):
         b = cover.get(name)

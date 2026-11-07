@@ -44,7 +44,7 @@ def get_footprints(bbox):
     r = s.get(FOOTPRINTS, params={
         "geometry": ",".join(map(str, bbox)), "geometryType": "esriGeometryEnvelope",
         "inSR": 3857, "spatialRel": "esriSpatialRelIntersects",
-        "outFields": "OBJECTID", "returnGeometry": "true", "outSR": 4326, "f": "geojson"}, timeout=60)
+        "outFields": "OBJECTID", "returnGeometry": "true", "outSR": 4326, "f": "geojson"}, timeout=20)
     r.raise_for_status()
     data = r.json()
     if "error" in data:
@@ -52,21 +52,40 @@ def get_footprints(bbox):
     return data
 
 
-def one(q, sources):
+def photo(q):
     img = os.path.join(IMG_DIR, q["id"] + ".jpg")
+    if os.path.exists(img):
+        return
+    last = None
+    for url in NAIP:
+        try:
+            open(img, "wb").write(get_photo(url, q["bbox3857"])); return
+        except Exception as e:
+            last = e
+    raise last
+
+
+def footprints(q):
     fp = os.path.join(FP_DIR, q["id"] + ".geojson")
-    if not os.path.exists(img):
-        last = None
-        for url in sources:
-            try:
-                data = get_photo(url, q["bbox3857"]); break
-            except Exception as e:
-                last = e
-        else:
-            raise last
-        open(img, "wb").write(data)
     if not os.path.exists(fp):
         json.dump(get_footprints(q["bbox3857"]), open(fp, "w"))
+
+
+def run_all(label, fn, items):
+    failed, done = [], 0
+    def wrap(q):
+        try:
+            fn(q); return q, None
+        except Exception as e:
+            return q, e
+    with ThreadPoolExecutor(max_workers=6) as ex:   # a handful of parallel requests; still gentle
+        for q, err in ex.map(wrap, items):
+            done += 1
+            if err:
+                failed.append(q); print(f"  {label} [{done}/{len(items)}] FAILED {q['name'][:35]}: {str(err)[:120]}")
+            elif done % 10 == 0 or done == len(items):
+                print(f"  {label} [{done}/{len(items)}]")
+    return failed
 
 
 def main():
@@ -74,26 +93,13 @@ def main():
         sys.exit("Run `python pipeline.py --data data --out out` first to create out/aerial_requests.json")
     reqs = json.load(open(REQ))
     os.makedirs(IMG_DIR, exist_ok=True); os.makedirs(FP_DIR, exist_ok=True)
-    todo = [q for q in reqs if not (os.path.exists(os.path.join(IMG_DIR, q["id"] + ".jpg"))
-                                   and os.path.exists(os.path.join(FP_DIR, q["id"] + ".geojson")))]
-    print(f"{len(reqs) - len(todo)} already downloaded, {len(todo)} to go (6 at a time)")
-    failed, done = [], 0
-
-    def run(q):
-        try:
-            one(q, NAIP)
-            return q, None
-        except Exception as e:
-            return q, e
-
-    with ThreadPoolExecutor(max_workers=6) as ex:   # a handful of parallel requests; still gentle on the servers
-        for q, err in ex.map(run, todo):
-            done += 1
-            if err:
-                failed.append(q["id"]); print(f"[{done}/{len(todo)}] FAILED {q['name'][:40]}: {str(err)[:150]}")
-            else:
-                print(f"[{done}/{len(todo)}] {q['name'][:50]}")
-    print(f"\nDone. {len(failed)} failed" + (" (re-run to retry)." if failed else "."))
+    need_img = [q for q in reqs if not os.path.exists(os.path.join(IMG_DIR, q["id"] + ".jpg"))]
+    need_fp = [q for q in reqs if not os.path.exists(os.path.join(FP_DIR, q["id"] + ".geojson"))]
+    print(f"Photos: {len(reqs) - len(need_img)} done, {len(need_img)} to go")
+    f1 = run_all("photo", photo, need_img)
+    print(f"Footprints: {len(reqs) - len(need_fp)} done, {len(need_fp)} to go (county server can be slow; skips after 20 s)")
+    f2 = run_all("footprints", footprints, need_fp)
+    print(f"\nDone. {len(f1)} photos and {len(f2)} footprint files failed" + (" (re-run to retry just those)." if f1 or f2 else "."))
 
 
 if __name__ == "__main__":

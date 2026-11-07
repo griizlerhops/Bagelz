@@ -10,9 +10,10 @@
       "max_acres_multifamily_zone": 5.0,
       "max_acres_singlefamily_zone_vacant": 1.5,
       "ownership": true,
-      "status": "secondary",
-      "source": "https://coxcastle.com/publication-big-support-for-smaller-housing-three-bills-that-reduce-entitlement-friction-for-housing-projects",
-      "notes": "Lot must be substantially surrounded by urban uses. Single-family lots must be vacant. Avg unit size max 1,750 sq ft. Gov Code 65852.28 / 66499.41 per HCD combined fact sheet."
+      "status": "verified",
+      "source": "https://law.counselstack.com/statute/ca/GOV/66499.41.",
+      "notes": "Gov Code 66499.41 (as amended 2025): 10 or fewer parcels and units; multifamily-zoned lot up to 5 acres, or vacant single-family lot up to 1.5 acres, substantially surrounded by urban uses. New parcels at least 600 sq ft (multifamily) or 1,200 sq ft (single-family). Excludes very high fire hazard zones and other SB 35 site exclusions.",
+      "min_new_lot_sqft_singlefamily": 1200
     },
     "SB9": {
       "name": "SB 9 lot split + duplex",
@@ -43,9 +44,9 @@
       "density_near_major_transit": 80,
       "ownership": true,
       "ownership_affordability": "For-sale projects: 30% of homes for moderate income or 15% for lower income, deed-restricted 45 years",
-      "status": "secondary",
-      "source": "https://gocodebook.com/library/us/ca/ca-gov-65912-ab2011-sb79-by-right-housing/title-7.-planning-and-land-use-65000-66499.58/division-1.-planning-and-zoning-65000-66345.4/chapter-4.1.-affordable-housing-and-high-road-jobs-act-of-2022-65912.100-65912.140/article-3.-mixed-income-housing-developments-along-commercial-corridors-65912.120-65912.124/65912.123",
-      "notes": "Gov Code 65912.123, metro densities as listed by Carlsbad, Pleasanton, SD County and CalHDF. One city checklist (Morgan Hill) lists 50/70 instead of 60/80: confirm current statute text on leginfo. Site must front a commercial corridor (non-freeway highway, 70-150 ft right-of-way); width unknown here, so the tool uses the 40/acre figure for 1+ acre sites."
+      "status": "verified",
+      "source": "https://law.counselstack.com/statute/ca/GOV/65912.123.",
+      "notes": "Gov Code 65912.123(c)(1), metropolitan jurisdictions: greater of local density or 30/acre (<1 acre), 40/acre (1+ acre, corridor <100 ft), 60/acre (1+ acre, corridor 100+ ft), 80/acre (within 1/2 mile of a major transit stop). Non-metro numbers are lower (20/30/50/70). Site must front a commercial corridor 70-150 ft wide."
     },
     "SB4": {
       "name": "SB 4 faith & college land",
