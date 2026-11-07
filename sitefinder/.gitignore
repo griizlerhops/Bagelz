@@ -5,8 +5,7 @@ data/*.zip
 data/aerials/
 data/footprints/
 data/_manifest.json
-# Build output
-out/
+# Build output (out/) is committed so teammates can open the site with no setup
 __pycache__/
 *.pyc
 .venv/
