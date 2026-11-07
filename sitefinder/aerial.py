@@ -96,7 +96,7 @@ def build_aerials(sites, data_dir, out_dir, rules):
             continue
         sid = safe_id(s["id"])
         img = os.path.join(img_dir, f"{sid}.jpg")
-        has_img = os.path.exists(img)
+        has_img = os.path.exists(img) and os.path.getsize(img) > 0
         bb = s["_bbox_merc"]
         parcel = gpd.GeoSeries([s["_geom"]], crs=4326).to_crs(MERC).iloc[0]
         # Mercator metres are stretched by 1/cos(lat): convert areas to true sq ft

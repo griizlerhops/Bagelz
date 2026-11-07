@@ -54,12 +54,13 @@ def get_footprints(bbox):
 
 def photo(q):
     img = os.path.join(IMG_DIR, q["id"] + ".jpg")
-    if os.path.exists(img):
+    if os.path.exists(img) and os.path.getsize(img) > 0:
         return
     last = None
     for url in NAIP:
         try:
-            open(img, "wb").write(get_photo(url, q["bbox3857"])); return
+            data = get_photo(url, q["bbox3857"])          # download first, then write: no empty files on failure
+            open(img, "wb").write(data); return
         except Exception as e:
             last = e
     raise last
@@ -93,7 +94,8 @@ def main():
         sys.exit("Run `python pipeline.py --data data --out out` first to create out/aerial_requests.json")
     reqs = json.load(open(REQ))
     os.makedirs(IMG_DIR, exist_ok=True); os.makedirs(FP_DIR, exist_ok=True)
-    need_img = [q for q in reqs if not os.path.exists(os.path.join(IMG_DIR, q["id"] + ".jpg"))]
+    has = lambda q: os.path.exists(os.path.join(IMG_DIR, q["id"] + ".jpg")) and os.path.getsize(os.path.join(IMG_DIR, q["id"] + ".jpg")) > 0
+    need_img = [q for q in reqs if not has(q)]
     need_fp = [q for q in reqs if not os.path.exists(os.path.join(FP_DIR, q["id"] + ".geojson"))]
     print(f"Photos: {len(reqs) - len(need_img)} done, {len(need_img)} to go")
     f1 = run_all("photo", photo, need_img)
